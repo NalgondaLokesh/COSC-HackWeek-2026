@@ -6,7 +6,7 @@ Welcome to the COSC HackWeek 2026 project repository! This week-long hackathon f
 
 The repository is organized by days, with each day focusing on different technologies and concepts:
 
-### Day 1 - Web Development Fundamentals
+### Day 1 - Projects
 - **[CGPA-Calculator](day1/CGPA-Calculator/)**: Academic performance tracking tool
 - **[Expense-Tracker](day1/Expense-Tracker/)**: Personal finance management
 - **[Kanban-Board](day1/Kanban-Board/)**: Project management with Kanban methodology
@@ -14,7 +14,7 @@ The repository is organized by days, with each day focusing on different technol
 - **[Soundboard](day1/Soundboard/)**: Interactive sound effects player
 - **[my-first-extension](day1/my-first-extension/)**: Browser extension development
 
-### Day 2 - Advanced Web Applications
+### Day 2 - Projects
 - **[Color-Blindness-Simulator](day2/Color-Blindness-Simulator/)**: Visual accessibility tool
 - **[Digital-Business-Card-Generator](day2/Digital-Business-Card-Generator/)**: Digital card creation
 - **[File-Metadata-Inspector](day2/File-Metadata-Inspector/)**: File analysis tool
@@ -22,20 +22,20 @@ The repository is organized by days, with each day focusing on different technol
 - **[habit-streak-tracker](day2/habit-streak-tracker/)**: Productivity and habit tracking
 - **[white-board](day2/white-board/)**: Collaborative drawing application
 
-### Day 3 - AI & Security Tools
+### Day 3 - Projects
 - **[A-tiny-programming-language](day3/A-tiny-programming-language/)**: Custom language interpreter
 - **[Kavach-COSC](day3/Kavach-COSC/)**: Security vulnerability detection
 - **[Kavach-tool](day3/Kavach-tool/)**: Advanced code security scanning
 - **[chat-with-ollama](day3/chat-with-ollama/)**: Local AI chat integration
 - **[cortex-agent](day3/cortex-agent/)**: AI agent framework
 
-### Day 4 - DevOps & Advanced Applications
+### Day 4 - Projects
 - **[Dockerizee-cosc](day4/Dockerizee-cosc/)**: Containerization best practices
 - **[Pikachumascot](day4/Pikachumascot/)**: Interactive mascot project
 - **[RAG-OA](day4/RAG-OA/)**: Document analysis with RAG
 - **[storage-explorer-extension](day4/storage-explorer-extension/)**: Cloud storage management
 
-### Day 5 - Advanced Tools & CI/CD
+### Day 5 - Projects
 - **[CI-COSC](day5/CI-COSC/)**: Continuous Integration/Deployment pipeline
 - **[Duplicate-Image-Finder](day5/Duplicate-Image-Finder/)**: Image deduplication tool
 - **[Image-Compression-Analyzer](day5/Image-Compression-Analyzer/)**: Image optimization
