@@ -90,4 +90,4 @@ For questions about COSC HackWeek 2026, please refer to the official hackathon c
 
 ---
 
-**Happy Hacking! 🎉**
+**Build Something Amazing! ✨**
