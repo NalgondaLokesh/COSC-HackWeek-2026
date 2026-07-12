@@ -1,0 +1,35 @@
+{
+  "customPatterns": [
+    {
+      "name": "Custom API Token",
+      "regex": "CUSTOM_TOKEN_[A-Z0-9]{32}",
+      "severity": "HIGH"
+    },
+    {
+      "name": "Internal Service Key",
+      "regex": "internal_key\\s*[=:]\\s*[\"']([A-Za-z0-9_-]{20,})[\"']",
+      "severity": "MEDIUM"
+    }
+  ],
+  
+  "severityOverrides": {
+    "Hardcoded IP with Port": "MEDIUM",
+    "Generic API Key": "HIGH"
+  },
+  
+  "ignorePatterns": [
+    "FAKE_.*_placeholder",
+    "example\\.com",
+    "test.*key"
+  ],
+  
+  "ignoreFiles": [
+    "fake-config.js",
+    ".env.example"
+  ],
+  
+  "ignoreDirs": [
+    "test-files",
+    "examples"
+  ]
+}

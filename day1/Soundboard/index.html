@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soundboard · 12 sounds</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #0b1a2a 0%, #1a2f44 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+        }
+        .board {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(6px);
+            border-radius: 3rem;
+            padding: 2.2rem 2rem 2.5rem;
+            max-width: 820px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.6);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #f0f7ff;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.02em;
+        }
+        .sub {
+            color: #89b0d4;
+            border-left: 4px solid #4a9eff;
+            padding-left: 1rem;
+            margin-bottom: 1.8rem;
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.2rem 2rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 4rem;
+            padding: 0.6rem 1.8rem 0.6rem 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .volume-group {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex: 1;
+            min-width: 150px;
+        }
+        .volume-group label {
+            color: #b8d0e8;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+        .volume-group input[type="range"] {
+            flex: 1;
+            min-width: 100px;
+            accent-color: #4a9eff;
+            background: #2a4058;
+            height: 4px;
+            border-radius: 10px;
+        }
+        .volume-group input[type="range"]::-webkit-slider-thumb {
+            background: #4a9eff;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #b0d0ff;
+        }
+        .stop-btn {
+            background: #e54c4c;
+            border: none;
+            color: white;
+            padding: 0.5rem 1.6rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 12px rgba(229, 76, 76, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+        .stop-btn:hover {
+            background: #c73a3a;
+            transform: scale(1.02);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.9rem;
+        }
+        .sound-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 0.8rem 0.2rem;
+            color: #eaf1fa;
+            font-weight: 500;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.12s;
+            text-align: center;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            line-height: 1.2;
+        }
+        .sound-btn .emoji {
+            font-size: 1.8rem;
+            line-height: 1.4;
+        }
+        .sound-btn .label {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            letter-spacing: 0.2px;
+        }
+        .sound-btn:hover {
+            background: rgba(74, 158, 255, 0.18);
+            border-color: #4a9eff;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(74, 158, 255, 0.15);
+        }
+        .sound-btn:active {
+            transform: scale(0.94);
+        }
+        .sound-btn.playing {
+            background: rgba(74, 158, 255, 0.25);
+            border-color: #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+        }
+        .footer {
+            margin-top: 1.8rem;
+            color: #5f82a3;
+            font-size: 0.75rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .footer a {
+            color: #7aa9d9;
+            text-decoration: none;
+            border-bottom: 1px dotted #3a5f82;
+        }
+        .footer a:hover {
+            color: #b0d0ff;
+        }
+        @media (max-width: 500px) {
+            .board { padding: 1.5rem; }
+            .controls { flex-direction: column; align-items: stretch; padding: 1rem; }
+            .grid { grid-template-columns: repeat(3, 1fr); }
+            .sound-btn { padding: 0.6rem 0.1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="board">
+    <h1>🔊 Soundboard</h1>
+    <div class="sub">12 sounds · volume control · stop all</div>
+
+    <div class="controls">
+        <div class="volume-group">
+            <label>🔉 Volume</label>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.7" />
+        </div>
+        <button class="stop-btn" id="stopAllBtn">⏹ Stop All</button>
+    </div>
+
+    <div class="grid" id="soundGrid"></div>
+
+    <div class="footer">
+        <span>💾 All sounds generated via Web Audio API (no external files)</span>
+        <span>🎮 12 unique tones</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- Sound definitions (12) -----
+        const SOUNDS = [
+            { id: 'piano', emoji: '🎹', label: 'Piano' },
+            { id: 'synth', emoji: '🎛️', label: 'Synth' },
+            { id: 'bass', emoji: '🎸', label: 'Bass' },
+            { id: 'bell', emoji: '🔔', label: 'Bell' },
+            { id: 'kick', emoji: '🥁', label: 'Kick' },
+            { id: 'snare', emoji: '🥁', label: 'Snare' },
+            { id: 'hat', emoji: '🥁', label: 'Hi-hat' },
+            { id: 'laser', emoji: '🔫', label: 'Laser' },
+            { id: 'bounce', emoji: '🏀', label: 'Bounce' },
+            { id: 'chime', emoji: '🔔', label: 'Chime' },
+            { id: 'scratch', emoji: '💿', label: 'Scratch' },
+            { id: 'vibe', emoji: '✨', label: 'Vibe' }
+        ];
+
+        // ----- Audio context & state -----
+        let audioCtx = null;
+        let activeNodes = []; // to stop all
+
+        // volume
+        const volumeSlider = document.getElementById('volumeSlider');
+        let masterGain = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // master gain
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = parseFloat(volumeSlider.value);
+                masterGain.connect(audioCtx.destination);
+            }
+            return audioCtx;
+        }
+
+        // ----- Sound generators (Web Audio) -----
+        function playSound(soundId) {
+            const ctx = getAudioContext();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+
+            // stop any previous instance of same sound? we allow overlap, but we'll track
+            // but we want to avoid too many, but it's fine.
+
+            const gainNode = ctx.createGain();
+            gainNode.gain.value = 0.35; // base gain
+            gainNode.connect(masterGain);
+
+            let oscillator = null;
+            let bufferSource = null;
+
+            // Different sound types using oscillators + noise / custom
+            switch (soundId) {
+                case 'piano': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(523, ctx.currentTime); // C5
+                    oscillator.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.2);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.4);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'synth': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.3);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.5);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'bass': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(80, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.3);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.4);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'bell': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.5);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'kick': {
+                    // noise + oscillator for kick
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(150, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.1);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.6, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.15);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'snare': {
+                    // white noise + oscillator
+                    const bufferSize = ctx.sampleRate * 0.08;
+                    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                    }
+                    bufferSource = ctx.createBufferSource();
+                    bufferSource.buffer = buffer;
+                    bufferSource.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                    bufferSource.start(ctx.currentTime);
+                    activeNodes.push(bufferSource);
+                    // add a little tone
+                    const osc2 = ctx.createOscillator();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(180, ctx.currentTime);
+                    osc2.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.06);
+                    const g2 = ctx.createGain();
+                    g2.gain.value = 0.2;
+                    osc2.connect(g2);
+                    g2.connect(masterGain);
+                    osc2.start(ctx.currentTime);
+                    osc2.stop(ctx.currentTime + 0.06);
+                    activeNodes.push(osc2);
+                    break;
+                }
+                case 'hat': {
+                    // white noise short
+                    const bufferSize = ctx.sampleRate * 0.04;
+                    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+                    }
+                    bufferSource = ctx.createBufferSource();
+                    bufferSource.buffer = buffer;
+                    bufferSource.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+                    bufferSource.start(ctx.currentTime);
+                    activeNodes.push(bufferSource);
+                    break;
+                }
+                case 'laser': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.3);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.3);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'bounce': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(300, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+                    oscillator.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.3);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.35, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.35);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                case 'chime': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1000, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1500, ctx.currentTime + 0.2);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.6);
+                    activeNodes.push(oscillator);
+                    // add harmonic
+                    const osc2 = ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(2000, ctx.currentTime);
+                    osc2.frequency.exponentialRampToValueAtTime(2500, ctx.currentTime + 0.2);
+                    const g2 = ctx.createGain();
+                    g2.gain.value = 0.08;
+                    osc2.connect(g2);
+                    g2.connect(masterGain);
+                    osc2.start(ctx.currentTime);
+                    osc2.stop(ctx.currentTime + 0.6);
+                    activeNodes.push(osc2);
+                    break;
+                }
+                case 'scratch': {
+                    // noise with modulation
+                    const bufSize = ctx.sampleRate * 0.15;
+                    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufSize; i++) {
+                        const env = Math.sin(i / bufSize * Math.PI);
+                        data[i] = (Math.random() * 2 - 1) * env * 0.6;
+                    }
+                    bufferSource = ctx.createBufferSource();
+                    bufferSource.buffer = buffer;
+                    bufferSource.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                    bufferSource.start(ctx.currentTime);
+                    activeNodes.push(bufferSource);
+                    break;
+                }
+                case 'vibe': {
+                    oscillator = ctx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.4);
+                    oscillator.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.7);
+                    oscillator.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.8);
+                    activeNodes.push(oscillator);
+                    break;
+                }
+                default: return;
+            }
+
+            // clean up active nodes after they finish
+            setTimeout(() => {
+                activeNodes = activeNodes.filter(n => n.context && n.context.state !== 'closed' && n.onended === undefined);
+            }, 100);
+        }
+
+        // ----- Stop all -----
+        function stopAll() {
+            // stop all audio nodes
+            activeNodes.forEach(node => {
+                try {
+                    if (node.stop) node.stop();
+                    if (node.disconnect) node.disconnect();
+                } catch (e) { /* ignore */ }
+            });
+            activeNodes = [];
+            // also close and recreate context? but we just clear
+            if (audioCtx && audioCtx.state === 'running') {
+                // we can suspend to free resources
+                audioCtx.suspend();
+            }
+            // remove playing class from all buttons
+            document.querySelectorAll('.sound-btn').forEach(btn => btn.classList.remove('playing'));
+        }
+
+        // ----- Build UI -----
+        const grid = document.getElementById('soundGrid');
+
+        SOUNDS.forEach(sound => {
+            const btn = document.createElement('button');
+            btn.className = 'sound-btn';
+            btn.dataset.id = sound.id;
+            btn.innerHTML = `
+                <span class="emoji">${sound.emoji}</span>
+                <span class="label">${sound.label}</span>
+            `;
+            btn.addEventListener('click', function(e) {
+                const id = this.dataset.id;
+                playSound(id);
+                // visual feedback
+                this.classList.add('playing');
+                setTimeout(() => this.classList.remove('playing'), 400);
+            });
+            grid.appendChild(btn);
+        });
+
+        // ----- Volume control -----
+        volumeSlider.addEventListener('input', function() {
+            if (masterGain) {
+                masterGain.gain.value = parseFloat(this.value);
+            }
+        });
+
+        // ----- Stop all button -----
+        document.getElementById('stopAllBtn').addEventListener('click', function() {
+            stopAll();
+        });
+
+        // ----- Cleanup on page unload -----
+        window.addEventListener('beforeunload', function() {
+            if (audioCtx) {
+                audioCtx.close();
+            }
+        });
+
+        // ----- init: resume audio on first user interaction -----
+        document.addEventListener('click', function resumeAudio() {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+
+        console.log('🔊 Soundboard loaded · 12 sounds · volume control · stop all');
+    })();
+</script>
+</body>
+</html>

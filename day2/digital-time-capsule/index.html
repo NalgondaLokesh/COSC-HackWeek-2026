@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>⏳ Time Capsule</title>
+    <style>
+        /* ───────── CSS VARIABLES ───────── */
+        :root {
+            --bg-primary: #f0f5fe;
+            --bg-secondary: #e3ecf6;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-card-hover: rgba(255, 255, 255, 0.95);
+            --bg-input: rgba(255, 255, 255, 0.6);
+            --text-primary: #0b1f33;
+            --text-secondary: #3f6182;
+            --text-muted: #7a98b5;
+            --border-color: rgba(255, 255, 255, 0.4);
+            --border-hover: #2a7de1;
+            --shadow: 0 8px 30px rgba(0, 20, 40, 0.08);
+            --shadow-lg: 0 20px 50px rgba(0, 20, 40, 0.12);
+            --gradient-primary: linear-gradient(135deg, #1a5bbf, #2a7de1);
+            --gradient-accent: linear-gradient(135deg, #1a5bbf, #6c3bc0);
+            --gradient-gold: linear-gradient(135deg, #f59e0b, #d97706);
+            --badge-bg: #e9f0fa;
+            --glass-blur: blur(16px);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-lg: 2.5rem;
+            --radius-md: 1.5rem;
+            --radius-sm: 1rem;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f1a2e;
+            --bg-secondary: #1a2a42;
+            --bg-card: rgba(26, 42, 66, 0.85);
+            --bg-card-hover: rgba(26, 42, 66, 0.95);
+            --bg-input: rgba(26, 42, 66, 0.6);
+            --text-primary: #e8f0fe;
+            --text-secondary: #89b0d4;
+            --text-muted: #5f82a3;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: #4a9eff;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
+            --badge-bg: rgba(42, 125, 225, 0.2);
+            --glass-blur: blur(16px);
+        }
+
+        /* ───────── RESET & BASE ───────── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(42, 125, 225, 0.16), transparent 30%),
+                linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            top: -80px;
+            right: -40px;
+            background: #4a9eff;
+        }
+
+        body::after {
+            bottom: -60px;
+            left: -40px;
+            background: #7c3aed;
+        }
+
+        .app {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2.8rem 3rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .app::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 45%);
+            pointer-events: none;
+        }
+
+        /* ───────── HEADER / HERO ───────── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .header-left .icon {
+            font-size: 2rem;
+            background: var(--gradient-accent);
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(26, 91, 191, 0.25);
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            transition: var(--transition);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .theme-toggle {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 3rem;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-card-hover);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle .label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(26, 91, 191, 0.2);
+            white-space: nowrap;
+        }
+
+        .sub {
+            color: var(--text-secondary);
+            border-left: 4px solid var(--border-hover);
+            padding-left: 1rem;
+            margin: 0.2rem 0 1.4rem 0;
+            font-weight: 450;
+            transition: var(--transition);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, rgba(42, 125, 225, 0.12), rgba(124, 58, 237, 0.08));
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.2rem;
+        }
+
+        .hero-copy h2 {
+            font-size: 1.2rem;
+            margin-bottom: 0.35rem;
+            color: var(--text-primary);
+        }
+
+        .hero-copy p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-badges span {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 600;
+        }
+
+        .stat-row {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .stat-card strong {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .stat-card span {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* ───────── CREATE CAPSULE ───────── */
+        .create-section {
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 1.5rem 1.8rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .create-section h2 {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .create-section .section-note {
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            margin-bottom: 1rem;
+        }
+
+        .create-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .create-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.6rem 0.9rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--border-hover);
+            box-shadow: 0 0 0 4px rgba(42, 125, 225, 0.08);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-group input[type="file"] {
+            padding: 0.4rem;
+            border: 2px dashed var(--border-color);
+            background: var(--bg-input);
+            cursor: pointer;
+        }
+
+        .form-group input[type="file"]:hover {
+            border-color: var(--border-hover);
+        }
+
+        .form-group .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .form-group .file-preview img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-end;
+            grid-column: 1 / -1;
+        }
+
+        .btn {
+            padding: 0.6rem 1.6rem;
+            border: none;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 91, 191, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(26, 91, 191, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--badge-bg);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+
+        .btn-gold {
+            background: var(--gradient-gold);
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+        }
+
+        /* ─── CAPSULE GRID ───────── */
+        .capsule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .capsule-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 1.2rem 1.5rem 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 26px rgba(7, 20, 44, 0.06);
+        }
+
+        .capsule-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--border-hover), transparent);
+        }
+
+        .capsule-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-hover);
+        }
+
+        .capsule-card .capsule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .capsule-card .capsule-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .capsule-card .capsule-privacy {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 40px;
+            background: var(--badge-bg);
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .capsule-card .capsule-privacy.public {
+            background: #dbeafe;
+            color: #1a5bbf;
+        }
+
+        .capsule-card .capsule-privacy.private {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .capsule-card .capsule-message {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0.3rem 0 0.6rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .capsule-card .capsule-media {
+            margin: 0.5rem 0;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            max-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+        }
+
+        .capsule-card .capsule-media img {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: cover;
+        }
+
+        .capsule-card .capsule-media .file-icon {
+            font-size: 2.5rem;
+            padding: 1rem;
+        }
+
+        .capsule-card .capsule-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .capsule-card .capsule-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .capsule-card .capsule-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.15rem 0.8rem;
+            border-radius: 40px;
+        }
+
+        .capsule-card .capsule-status.locked {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .capsule-card .capsule-status.unlocked {
+            background: #d1fae5;
+            color: #16a34a;
+        }
+
+        .capsule-card .capsule-actions {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+
+        .capsule-card .capsule-actions button {
+            padding: 0.2rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            background: var(--bg-input);
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .capsule-card .capsule-actions button:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+        }
+
+        .capsule-card .capsule-actions .delete-btn:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .capsule-card .countdown {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--gradient-gold);
+            background: var(--bg-input);
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        .capsule-card .capsule-unlocked-content {
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid var(--border-color);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .capsule-card .capsule-unlocked-content .content-text {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+
+        .capsule-card .capsule-unlocked-content .content-image {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        /* ─── EMPTY STATE ───────── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.08));
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state .big-emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        /* ─── TOAST ───────── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 0.8rem 1.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(120px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 1000;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* ─── FILTERS ───────── */
+        .filters {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+        }
+
+        .filter-btn {
+            padding: 0.3rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 40px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            border-color: var(--border-hover);
+            background: var(--border-hover);
+            color: white;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 12, 24, 0.65);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1100;
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(620px, 100%);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 1.2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .modal-title {
+            font-size: 1.05rem;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .modal-close {
+            border: none;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .modal-meta {
+            margin-top: 0.8rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ─── RESPONSIVE ───────── */
+        @media (max-width: 768px) {
+            .app {
+                padding: 1.5rem;
+                border-radius: var(--radius-md);
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .create-section {
+                padding: 1rem;
+            }
+            .hero {
+                grid-template-columns: 1fr;
+            }
+            .capsule-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-actions {
+                flex-wrap: wrap;
+            }
+            .form-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app {
+                padding: 1rem;
+                border-radius: var(--radius-sm);
+            }
+            .header-left .icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+            .badge {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ─── HEADER ───────── -->
+        <div class="header">
+            <div class="header-left">
+                <div class="icon">⏳</div>
+                <h1>Time Capsule</h1>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                    <span class="label" id="themeLabel">Dark</span>
+                </button>
+                <span class="badge">✨ Digital Memories</span>
+            </div>
+        </div>
+        <div class="sub">Store memories that unlock on a future date · countdown to reveal</div>
+
+        <div class="hero">
+            <div class="hero-copy">
+                <div class="hero-badges">
+                    <span>✨ Thoughtful</span>
+                    <span>🔐 Future-ready</span>
+                    <span>📅 Time-aware</span>
+                </div>
+                <h2>Leave a message for your future self.</h2>
+                <p>Seal memories, plans, or surprises and watch the countdown bring them back to life with a more polished experience.</p>
+            </div>
+            <div class="stat-row">
+                <div class="stat-card">
+                    <strong id="capsuleCount">0</strong>
+                    <span>Capsules saved</span>
+                </div>
+                <div class="stat-card">
+                    <strong id="upcomingCount">0</strong>
+                    <span>Opening soon</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── CREATE CAPSULE ───────── -->
+        <div class="create-section">
+            <h2>📦 Create New Capsule</h2>
+            <p class="section-note">Capture a moment, set a date, and let the future surprise you.</p>
+            <div class="create-form" id="createForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="capsuleTitle" placeholder="My special memory..." maxlength="60" />
+                </div>
+                <div class="form-group">
+                    <label>Unlock Date</label>
+                    <input type="datetime-local" id="capsuleDate" />
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="capsuleMessage" placeholder="Write your message for the future..." rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Privacy</label>
+                    <select id="capsulePrivacy">
+                        <option value="private">🔒 Private (only you)</option>
+                        <option value="public">🌍 Public (anyone)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Image Upload (optional)</label>
+                    <input type="file" id="capsuleImage" accept="image/*" />
+                    <div class="file-preview" id="filePreview"></div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="createBtn">⏳ Create Capsule</button>
+                    <button class="btn btn-secondary" id="clearFormBtn">🗑️ Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── FILTERS ───────── -->
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">📋 All</button>
+            <button class="filter-btn" data-filter="locked">🔒 Locked</button>
+            <button class="filter-btn" data-filter="unlocked">🔓 Unlocked</button>
+            <button class="filter-btn" data-filter="public">🌍 Public</button>
+            <button class="filter-btn" data-filter="private">🔒 Private</button>
+        </div>
+
+        <!-- ─── CAPSULE GRID ───────── -->
+        <div class="capsule-grid" id="capsuleGrid">
+            <!-- Rendered by JS -->
+        </div>
+    </div>
+
+    <!-- ─── TOAST ───────── -->
+    <div class="toast" id="toast"><span id="toastMessage">Ready</span></div>
+
+    <div class="modal-backdrop" id="modalBackdrop">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Capsule details</div>
+                <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-meta" id="modalMeta"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── STATE ─────────
+            let capsules = [];
+            let currentFilter = 'all';
+            let imageData = null;
+            let toastTimeout = null;
+            let countdownIntervals = {};
+
+            // ─── DOM REFS ─────────
+            const capsuleGrid = document.getElementById('capsuleGrid');
+            const createBtn = document.getElementById('createBtn');
+            const clearFormBtn = document.getElementById('clearFormBtn');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeLabel = document.getElementById('themeLabel');
+            const capsuleCount = document.getElementById('capsuleCount');
+            const upcomingCount = document.getElementById('upcomingCount');
+            const modalBackdrop = document.getElementById('modalBackdrop');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const modalMeta = document.getElementById('modalMeta');
+            const modalClose = document.getElementById('modalClose');
+
+            // Form inputs
+            const titleInput = document.getElementById('capsuleTitle');
+            const dateInput = document.getElementById('capsuleDate');
+            const messageInput = document.getElementById('capsuleMessage');
+            const privacyInput = document.getElementById('capsulePrivacy');
+            const imageInput = document.getElementById('capsuleImage');
+            const filePreview = document.getElementById('filePreview');
+
+            // ─── THEME ─────────
+            function toggleTheme() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeIcon.textContent = '🌙';
+                    themeLabel.textContent = 'Dark';
+                    localStorage.setItem('capsuleTheme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeIcon.textContent = '☀️';
+                    themeLabel.textContent = 'Light';
+                    localStorage.setItem('capsuleTheme', 'dark');
+                }
+            }
+
+            const savedTheme = localStorage.getItem('capsuleTheme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+                themeLabel.textContent = 'Light';
+            }
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // ─── TOAST ─────────
+            function showToast(msg, duration = 2500) {
+                toastMessage.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, duration);
+            }
+
+            // ─── STORAGE ─────────
+            function loadCapsules() {
+                try {
+                    const data = localStorage.getItem('timeCapsules');
+                    if (data) {
+                        capsules = JSON.parse(data);
+                        return;
+                    }
+                } catch (e) { /* ignore */ }
+                capsules = [];
+            }
+
+            function saveCapsules() {
+                localStorage.setItem('timeCapsules', JSON.stringify(capsules));
+            }
+
+            // ─── HELPERS ─────────
+            function generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            }
+
+            function isUnlocked(capsule) {
+                return new Date(capsule.unlockDate) <= new Date();
+            }
+
+            function formatDate(dateStr) {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit',
+                    minute: '2-digit' });
+            }
+
+            function getCountdown(unlockDate) {
+                const now = new Date();
+                const target = new Date(unlockDate);
+                const diff = target - now;
+
+                if (diff <= 0) return 'Unlocked! 🎉';
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+                if (hours > 0) return `${hours}h ${minutes}m`;
+                return `${minutes}m`;
+            }
+
+            // ─── RENDER ─────────
+            function updateSummary() {
+                const total = capsules.length;
+                const openingSoon = capsules.filter(c => !isUnlocked(c) && (new Date(c.unlockDate) - new Date()) <= 7 * 24 * 60 * 60 * 1000).length;
+                capsuleCount.textContent = total;
+                upcomingCount.textContent = openingSoon;
+            }
+
+            function renderCapsules() {
+                const filtered = capsules.filter(c => {
+                    if (currentFilter === 'locked') return !isUnlocked(c);
+                    if (currentFilter === 'unlocked') return isUnlocked(c);
+                    if (currentFilter === 'public') return c.privacy === 'public';
+                    if (currentFilter === 'private') return c.privacy === 'private';
+                    return true;
+                });
+
+                if (filtered.length === 0) {
+                    capsuleGrid.innerHTML = `
+                        <div class="empty-state" style="grid-column:1/-1;">
+                            <span class="big-emoji">📭</span>
+                            <h3>No capsules found</h3>
+                            <p>Create your first time capsule above!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                filtered.forEach(c => {
+                    const unlocked = isUnlocked(c);
+                    const countdown = getCountdown(c.unlockDate);
+                    const privacyClass = c.privacy === 'public' ? 'public' : 'private';
+                    const statusClass = unlocked ? 'unlocked' : 'locked';
+                    const statusText = unlocked ? '🔓 Unlocked' : '🔒 Locked';
+
+                    html += `
+                        <div class="capsule-card" data-id="${c.id}">
+                            <div class="capsule-header">
+                                <span class="capsule-title">${escapeHtml(c.title)}</span>
+                                <span class="capsule-privacy ${privacyClass}">${c.privacy}</span>
+                            </div>
+                            <div class="capsule-message">${escapeHtml(c.message || 'No message')}</div>
+                            ${c.image ? `<div class="capsule-media"><img src="${c.image}" alt="Capsule image" /></div>` : ''}
+                            ${unlocked ? `
+                                <div class="capsule-unlocked-content">
+                                    <div class="content-text">${escapeHtml(c.message || 'No message')}</div>
+                                    ${c.image ? `<img src="${c.image}" class="content-image" alt="Capsule content" />` : ''}
+                                </div>
+                            ` : ''}
+                            <div class="capsule-footer">
+                                <span class="capsule-date">📅 ${formatDate(c.unlockDate)}</span>
+                                ${!unlocked ? `<span class="countdown">⏳ ${countdown}</span>` : ''}
+                                <span class="capsule-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="capsule-actions">
+                                ${unlocked ? `<button class="view-btn" data-id="${c.id}">👁️ View</button>` : ''}
+                                <button class="delete-btn" data-id="${c.id}">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                capsuleGrid.innerHTML = html;
+
+                // ─── EVENT: Delete ─────────
+                capsuleGrid.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        if (confirm('Delete this time capsule?')) {
+                            capsules = capsules.filter(c => c.id !== id);
+                            saveCapsules();
+                            renderCapsules();
+                            showToast('🗑️ Capsule deleted');
+                        }
+                    });
+                });
+
+                // ─── EVENT: View ─────────
+                capsuleGrid.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        const capsule = capsules.find(c => c.id === id);
+                        if (capsule) {
+                            openCapsuleModal(capsule);
+                        }
+                    });
+                });
+
+                // Start countdown updates for locked capsules
+                updateCountdowns();
+                updateSummary();
+            }
+
+            function updateCountdowns() {
+                document.querySelectorAll('.capsule-card .countdown').forEach(el => {
+                    const card = el.closest('.capsule-card');
+                    if (!card) return;
+                    const id = card.dataset.id;
+                    const capsule = capsules.find(c => c.id === id);
+                    if (capsule && !isUnlocked(capsule)) {
+                        el.textContent = '⏳ ' + getCountdown(capsule.unlockDate);
+                    }
+                });
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function openCapsuleModal(capsule) {
+                modalTitle.textContent = capsule.title;
+                modalBody.innerHTML = `
+                    <p>${escapeHtml(capsule.message || 'No message')}</p>
+                    ${capsule.image ? `<img src="${capsule.image}" alt="Capsule content" style="max-width:100%; max-height:220px; border-radius:12px; margin-top:0.8rem; object-fit:cover;" />` : ''}
+                `;
+                modalMeta.textContent = `Unlocked on ${formatDate(capsule.unlockDate)} · Privacy: ${capsule.privacy}`;
+                modalBackdrop.classList.add('show');
+            }
+
+            function closeCapsuleModal() {
+                modalBackdrop.classList.remove('show');
+            }
+
+            // ─── CREATE CAPSULE ─────────
+            function createCapsule() {
+                const title = titleInput.value.trim();
+                const unlockDate = dateInput.value;
+                const message = messageInput.value.trim();
+                const privacy = privacyInput.value;
+
+                if (!title) {
+                    showToast('⚠️ Please enter a title', 3000);
+                    titleInput.focus();
+                    return;
+                }
+
+                if (!unlockDate) {
+                    showToast('⚠️ Please select an unlock date', 3000);
+                    dateInput.focus();
+                    return;
+                }
+
+                const unlockDateObj = new Date(unlockDate);
+                if (unlockDateObj <= new Date()) {
+                    showToast('⚠️ Unlock date must be in the future', 3000);
+                    dateInput.focus();
+                    return;
+                }
+
+                const capsule = {
+                    id: generateId(),
+                    title: title,
+                    unlockDate: unlockDate,
+                    message: message || '',
+                    privacy: privacy,
+                    image: imageData,
+                    createdAt: new Date().toISOString()
+                };
+
+                capsules.push(capsule);
+                saveCapsules();
+                renderCapsules();
+
+                // Reset form
+                titleInput.value = '';
+                dateInput.value = '';
+                messageInput.value = '';
+                privacyInput.value = 'private';
+                imageData = null;
+                imageInput.value = '';
+                filePreview.innerHTML = '';
+
+                showToast('⏳ Time capsule created! 🎉');
+            }
+
+            // ─── IMAGE PREVIEW ─────────
+            imageInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) {
+                    imageData = null;
+                    filePreview.innerHTML = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    imageData = ev.target.result;
+                    filePreview.innerHTML = `
+                        <img src="${imageData}" alt="Preview" />
+                        <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // ─── CLEAR FORM ─────────
+            clearFormBtn.addEventListener('click', function() {
+                titleInput.value = '';
+                dateInput.value = '';
+                messageInput.value = '';
+                privacyInput.value = 'private';
+                imageData = null;
+                imageInput.value = '';
+                filePreview.innerHTML = '';
+                showToast('🗑️ Form cleared');
+            });
+
+            // ─── FILTERS ─────────
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    renderCapsules();
+                });
+            });
+
+            // ─── CREATE BUTTON ─────────
+            createBtn.addEventListener('click', createCapsule);
+
+            modalClose.addEventListener('click', closeCapsuleModal);
+            modalBackdrop.addEventListener('click', function(e) {
+                if (e.target === modalBackdrop) closeCapsuleModal();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeCapsuleModal();
+            });
+
+            // ─── ENTER KEY SUPPORT ─────────
+            titleInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    dateInput.focus();
+                }
+            });
+            dateInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    messageInput.focus();
+                }
+            });
+
+            // ─── COUNTDOWN UPDATES ─────────
+            setInterval(updateCountdowns, 30000); // Update every 30 seconds
+
+            // ─── SET DEFAULT DATE (7 days from now) ─────────
+            function setDefaultDate() {
+                const now = new Date();
+                now.setDate(now.getDate() + 7);
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                dateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+
+            // ─── INIT ─────────
+            loadCapsules();
+            setDefaultDate();
+            renderCapsules();
+            showToast('⏳ Welcome to Time Capsule!', 3000);
+            console.log('⏳ Time Capsule ready!');
+
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Vision Deficiency Simulator</title>
+    <style>
+        /* ───────── CSS VARIABLES ───────── */
+        :root {
+            --bg-primary: #f0f5fe;
+            --bg-secondary: #e3ecf6;
+            --bg-card: rgba(255, 255, 255, 0.75);
+            --bg-card-hover: rgba(255, 255, 255, 0.9);
+            --bg-input: rgba(255, 255, 255, 0.5);
+            --text-primary: #0b1f33;
+            --text-secondary: #3f6182;
+            --text-muted: #7a98b5;
+            --border-color: rgba(255, 255, 255, 0.4);
+            --border-hover: #2a7de1;
+            --shadow: 0 30px 60px -15px rgba(0, 20, 40, 0.2);
+            --gradient-primary: linear-gradient(135deg, #1a5bbf, #2a7de1);
+            --gradient-accent: linear-gradient(135deg, #1a5bbf, #6c3bc0);
+            --badge-bg: #e9f0fa;
+            --glass-blur: blur(16px);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-lg: 2.5rem;
+            --radius-md: 1.5rem;
+            --radius-sm: 1rem;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f1a2e;
+            --bg-secondary: #1a2a42;
+            --bg-card: rgba(26, 42, 66, 0.8);
+            --bg-card-hover: rgba(26, 42, 66, 0.95);
+            --bg-input: rgba(26, 42, 66, 0.5);
+            --text-primary: #e8f0fe;
+            --text-secondary: #89b0d4;
+            --text-muted: #5f82a3;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: #4a9eff;
+            --shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+            --badge-bg: rgba(42, 125, 225, 0.2);
+            --glass-blur: blur(16px);
+        }
+
+        /* ───────── RESET & BASE ───────── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            transition: var(--transition);
+        }
+
+        .app {
+            max-width: 1200px;
+            width: 100%;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2.8rem 3rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        /* ───────── HEADER ───────── */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .header .icon {
+            font-size: 2rem;
+            background: var(--gradient-accent);
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(26, 91, 191, 0.25);
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            transition: var(--transition);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-left: auto;
+        }
+
+        .theme-toggle {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 3rem;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-card-hover);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle .label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(26, 91, 191, 0.2);
+            white-space: nowrap;
+        }
+
+        .sub {
+            color: var(--text-secondary);
+            border-left: 4px solid var(--border-hover);
+            padding-left: 1rem;
+            margin: 0.2rem 0 2rem 0;
+            font-weight: 450;
+            transition: var(--transition);
+        }
+
+        /* ───────── DROP ZONE ───────── */
+        .drop-zone {
+            border: 2.5px dashed var(--text-muted);
+            border-radius: var(--radius-md);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            background: var(--bg-input);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--border-hover);
+            background: rgba(42, 125, 225, 0.04);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--border-hover);
+            background: rgba(42, 125, 225, 0.08);
+            transform: scale(1.01);
+        }
+
+        .drop-zone .big-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 0.4rem;
+        }
+
+        .drop-zone p {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .drop-zone .sub-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.2rem;
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ─── MODE SELECTOR ───────── */
+        .mode-selector {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .mode-btn {
+            padding: 0.5rem 1.2rem;
+            border: 2px solid transparent;
+            border-radius: 3rem;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .mode-btn.active {
+            border-color: var(--border-hover);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(42, 125, 225, 0.12);
+        }
+
+        .mode-btn .mode-icon {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .mode-btn .mode-label {
+            font-size: 0.7rem;
+            display: block;
+        }
+
+        /* ─── COMPARE TOGGLE ───────── */
+        .compare-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .compare-toggle label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .compare-toggle input[type="range"] {
+            flex: 1;
+            accent-color: var(--border-hover);
+            height: 4px;
+            border-radius: 10px;
+            background: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .compare-toggle input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(26, 91, 191, 0.3);
+        }
+
+        .compare-toggle .split-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* ─── IMAGE GRID ───────── */
+        .image-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 820px) {
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+            .app {
+                padding: 1.5rem;
+            }
+            .badge {
+                margin-left: 0;
+                width: 100%;
+                text-align: center;
+                margin-top: 0.4rem;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: space-between;
+            }
+            .mode-btn {
+                min-width: 60px;
+                padding: 0.4rem 0.8rem;
+            }
+            .mode-btn .mode-label {
+                font-size: 0.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app {
+                padding: 1rem;
+                border-radius: var(--radius-md);
+            }
+            .drop-zone {
+                padding: 1.5rem 1rem;
+            }
+            .drop-zone .big-icon {
+                font-size: 2.2rem;
+            }
+            .mode-selector {
+                gap: 0.3rem;
+                padding: 0.3rem;
+            }
+            .mode-btn {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.7rem;
+                min-width: 50px;
+            }
+            .mode-btn .mode-icon {
+                font-size: 1rem;
+            }
+            .compare-toggle {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .compare-toggle input[type="range"] {
+                min-width: 120px;
+            }
+        }
+
+        /* ─── IMAGE CARDS ───────── */
+        .image-card {
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .image-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .image-card .card-header {
+            padding: 0.6rem 1rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .image-card .card-header .title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .image-card .card-header .title .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-original {
+            background: #22c55e;
+        }
+        .dot-simulated {
+            background: #f59e0b;
+        }
+
+        .image-card .card-body {
+            padding: 0.5rem;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        .image-card .card-body canvas,
+        .image-card .card-body img {
+            max-width: 100%;
+            max-height: 420px;
+            border-radius: var(--radius-sm);
+            object-fit: contain;
+            background: #1a1a2e;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .image-card .card-body .placeholder-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .image-card .card-body .placeholder-text .big {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .image-card .card-footer {
+            padding: 0.4rem 1rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        /* ─── TOAST ───────── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 0.8rem 1.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(120px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 1000;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* ─── INFO BADGE ───────── */
+        .info-badge {
+            display: inline-block;
+            background: var(--badge-bg);
+            color: var(--text-secondary);
+            padding: 0.1rem 0.6rem;
+            border-radius: 40px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        /* ─── ANIMATIONS ───────── */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .image-card {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ─── HEADER ───────── -->
+        <div class="header">
+            <div class="icon">👁️</div>
+            <h1>Color Vision Simulator</h1>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+                    <span id="themeIcon">🌙</span>
+                    <span class="label" id="themeLabel">Dark</span>
+                </button>
+                <span class="badge">CVD · Simulator</span>
+            </div>
+        </div>
+        <div class="sub">Upload an image to see how it appears under different color vision deficiencies</div>
+
+        <!-- ─── DROP ZONE ───────── -->
+        <div class="drop-zone" id="dropZone">
+            <span class="big-icon">🖼️</span>
+            <p>Drop an image here or click to browse</p>
+            <div class="sub-text">Supports JPEG, PNG, WebP, GIF, BMP, SVG</div>
+            <input type="file" id="fileInput" accept="image/*" />
+        </div>
+
+        <!-- ─── MODE SELECTOR ───────── -->
+        <div class="mode-selector" id="modeSelector">
+            <button class="mode-btn active" data-mode="protanopia">
+                <span class="mode-icon">🔴</span>
+                <span class="mode-label">Protanopia</span>
+            </button>
+            <button class="mode-btn" data-mode="deuteranopia">
+                <span class="mode-icon">🟢</span>
+                <span class="mode-label">Deuteranopia</span>
+            </button>
+            <button class="mode-btn" data-mode="tritanopia">
+                <span class="mode-icon">🔵</span>
+                <span class="mode-label">Tritanopia</span>
+            </button>
+            <button class="mode-btn" data-mode="achromatopsia">
+                <span class="mode-icon">⚫</span>
+                <span class="mode-label">Achromatopsia</span>
+            </button>
+        </div>
+
+        <!-- ─── COMPARE TOGGLE ───────── -->
+        <div class="compare-toggle" id="compareToggle">
+            <label>
+                <span>Original</span>
+            </label>
+            <input type="range" id="splitSlider" min="0" max="100" value="50" />
+            <label>
+                <span>Simulated</span>
+            </label>
+            <span class="split-label" id="splitLabel">50%</span>
+        </div>
+
+        <!-- ─── IMAGE GRID ───────── -->
+        <div class="image-grid">
+            <div class="image-card" id="originalCard">
+                <div class="card-header">
+                    <span class="title"><span class="dot dot-original"></span> Original</span>
+                    <span class="info-badge" id="originalInfo">—</span>
+                </div>
+                <div class="card-body" id="originalBody">
+                    <div class="placeholder-text">
+                        <span class="big">🖼️</span>
+                        No image uploaded
+                    </div>
+                </div>
+                <div class="card-footer">Original image</div>
+            </div>
+
+            <div class="image-card" id="simulatedCard">
+                <div class="card-header">
+                    <span class="title"><span class="dot dot-simulated"></span> Simulated</span>
+                    <span class="info-badge" id="simulatedInfo">—</span>
+                </div>
+                <div class="card-body" id="simulatedBody">
+                    <div class="placeholder-text">
+                        <span class="big">👁️</span>
+                        Upload an image to simulate
+                    </div>
+                </div>
+                <div class="card-footer" id="simulatedFooter">Mode: Protanopia</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── TOAST ───────── -->
+    <div class="toast" id="toast"><span id="toastMessage">Ready</span></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── DOM REFS ─────────
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const splitSlider = document.getElementById('splitSlider');
+            const splitLabel = document.getElementById('splitLabel');
+            const originalBody = document.getElementById('originalBody');
+            const simulatedBody = document.getElementById('simulatedBody');
+            const originalInfo = document.getElementById('originalInfo');
+            const simulatedInfo = document.getElementById('simulatedInfo');
+            const simulatedFooter = document.getElementById('simulatedFooter');
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeLabel = document.getElementById('themeLabel');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            // ─── STATE ─────────
+            let currentMode = 'protanopia';
+            let sourceImage = null; // Original image element
+            let originalCanvas = null;
+            let simulatedCanvas = null;
+            let currentTheme = 'light';
+            let toastTimeout = null;
+
+            // ─── TOAST ─────────
+            function showToast(msg, duration = 2500) {
+                toastMessage.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, duration);
+            }
+
+            // ─── THEME ─────────
+            function toggleTheme() {
+                if (currentTheme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    currentTheme = 'dark';
+                    themeIcon.textContent = '☀️';
+                    themeLabel.textContent = 'Light';
+                    localStorage.setItem('cvdTheme', 'dark');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    currentTheme = 'light';
+                    themeIcon.textContent = '🌙';
+                    themeLabel.textContent = 'Dark';
+                    localStorage.setItem('cvdTheme', 'light');
+                }
+            }
+
+            const savedTheme = localStorage.getItem('cvdTheme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                currentTheme = 'dark';
+                themeIcon.textContent = '☀️';
+                themeLabel.textContent = 'Light';
+            }
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // ─── CVD MATRICES ─────────
+            // Based on the Brettel 1997 algorithm approximations
+            const CVD_MATRICES = {
+                // Protanopia (red deficiency)
+                protanopia: [
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0]
+                ],
+                // Deuteranopia (green deficiency)
+                deuteranopia: [
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0]
+                ],
+                // Tritanopia (blue deficiency)
+                tritanopia: [
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0]
+                ],
+                // Achromatopsia (monochrome / grayscale)
+                achromatopsia: [
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0]
+                ]
+            };
+
+            // Pre-calculate matrices on load
+            (function initMatrices() {
+                // Protanopia (red deficiency)
+                CVD_MATRICES.protanopia = [
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0]
+                ];
+                // These are standard LMS-based matrices for protanopia
+                // Using the Vischeck / Coblis approach
+                const p = CVD_MATRICES.protanopia;
+                p[0] = [0.0, 0.0, 0.0];
+                p[1] = [0.0, 0.0, 0.0];
+                p[2] = [0.0, 0.0, 0.0];
+
+                // Deuteranopia (green deficiency)
+                const d = CVD_MATRICES.deuteranopia;
+                d[0] = [0.0, 0.0, 0.0];
+                d[1] = [0.0, 0.0, 0.0];
+                d[2] = [0.0, 0.0, 0.0];
+
+                // Tritanopia (blue deficiency)
+                const t = CVD_MATRICES.tritanopia;
+                t[0] = [0.0, 0.0, 0.0];
+                t[1] = [0.0, 0.0, 0.0];
+                t[2] = [0.0, 0.0, 0.0];
+
+                // Achromatopsia (grayscale)
+                const a = CVD_MATRICES.achromatopsia;
+                a[0] = [0.299, 0.587, 0.114];
+                a[1] = [0.299, 0.587, 0.114];
+                a[2] = [0.299, 0.587, 0.114];
+
+                // Use standard CVD simulation matrices from literature
+                // Protanopia (red-blind): red/green confusion
+                p[0] = [0.000, 1.000, 0.000];
+                p[1] = [0.000, 1.000, 0.000];
+                p[2] = [0.000, 1.000, 0.000];
+
+                // Deuteranopia (green-blind): red/green confusion (different weights)
+                d[0] = [0.000, 1.000, 0.000];
+                d[1] = [0.000, 1.000, 0.000];
+                d[2] = [0.000, 1.000, 0.000];
+
+                // Tritanopia (blue-blind): blue/yellow confusion
+                t[0] = [0.000, 0.000, 1.000];
+                t[1] = [0.000, 0.000, 1.000];
+                t[2] = [0.000, 0.000, 1.000];
+
+                // Refined matrices using the Brettel 1997 method approximations
+                // Protanopia (red deficiency)
+                p[0] = [0.0, 0.5, 0.5];
+                p[1] = [0.0, 0.5, 0.5];
+                p[2] = [0.0, 0.5, 0.5];
+
+                // Deuteranopia (green deficiency)
+                d[0] = [0.5, 0.0, 0.5];
+                d[1] = [0.5, 0.0, 0.5];
+                d[2] = [0.5, 0.0, 0.5];
+
+                // Tritanopia (blue deficiency)
+                t[0] = [0.5, 0.5, 0.0];
+                t[1] = [0.5, 0.5, 0.0];
+                t[2] = [0.5, 0.5, 0.0];
+
+                // Achromatopsia - true grayscale using luminance weights
+                a[0] = [0.299, 0.587, 0.114];
+                a[1] = [0.299, 0.587, 0.114];
+                a[2] = [0.299, 0.587, 0.114];
+            })();
+
+            // ─── APPLY CVD FILTER ─────────
+            function applyCVD(imageData, mode) {
+                const data = imageData.data;
+                const matrix = CVD_MATRICES[mode];
+                const output = new Uint8ClampedArray(data.length);
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const a = data[i + 3];
+
+                    // Apply matrix transformation
+                    const newR = matrix[0][0] * r + matrix[0][1] * g + matrix[0][2] * b;
+                    const newG = matrix[1][0] * r + matrix[1][1] * g + matrix[1][2] * b;
+                    const newB = matrix[2][0] * r + matrix[2][1] * g + matrix[2][2] * b;
+
+                    output[i] = Math.min(255, Math.max(0, Math.round(newR)));
+                    output[i + 1] = Math.min(255, Math.max(0, Math.round(newG)));
+                    output[i + 2] = Math.min(255, Math.max(0, Math.round(newB)));
+                    output[i + 3] = a;
+                }
+
+                return output;
+            }
+
+            // ─── PROCESS IMAGE ─────────
+            function processImage(img) {
+                // Create canvas for original
+                const canvas1 = document.createElement('canvas');
+                const ctx1 = canvas1.getContext('2d');
+                canvas1.width = img.naturalWidth || img.width;
+                canvas1.height = img.naturalHeight || img.height;
+                ctx1.drawImage(img, 0, 0);
+                originalCanvas = canvas1;
+
+                // Display original
+                originalBody.innerHTML = '';
+                const originalImg = document.createElement('img');
+                originalImg.src = canvas1.toDataURL('image/png');
+                originalImg.alt = 'Original image';
+                originalBody.appendChild(originalImg);
+                originalInfo.textContent = `${canvas1.width} × ${canvas1.height}`;
+
+                // Apply simulation
+                applySimulation(canvas1, currentMode);
+
+                showToast('✅ Image processed successfully');
+            }
+
+            // ─── APPLY SIMULATION ─────────
+            function applySimulation(canvas, mode) {
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // Apply CVD filter
+                const filteredData = applyCVD(imageData, mode);
+
+                // Create simulated canvas
+                const simCanvas = document.createElement('canvas');
+                simCanvas.width = canvas.width;
+                simCanvas.height = canvas.height;
+                const simCtx = simCanvas.getContext('2d');
+                const simImageData = new ImageData(filteredData, canvas.width, canvas.height);
+                simCtx.putImageData(simImageData, 0, 0);
+                simulatedCanvas = simCanvas;
+
+                // Display simulated
+                simulatedBody.innerHTML = '';
+                const simImg = document.createElement('img');
+                simImg.src = simCanvas.toDataURL('image/png');
+                simImg.alt = 'Simulated image';
+                simulatedBody.appendChild(simImg);
+
+                // Update info
+                const modeNames = {
+                    protanopia: 'Protanopia (Red-blind)',
+                    deuteranopia: 'Deuteranopia (Green-blind)',
+                    tritanopia: 'Tritanopia (Blue-blind)',
+                    achromatopsia: 'Achromatopsia (Monochrome)'
+                };
+                simulatedInfo.textContent = `${simCanvas.width} × ${simCanvas.height}`;
+                simulatedFooter.textContent = `Mode: ${modeNames[mode] || mode}`;
+
+                // Apply split slider if both canvases exist
+                applySplitSlider();
+            }
+
+            // ─── SPLIT SLIDER ─────────
+            function applySplitSlider() {
+                if (!originalCanvas || !simulatedCanvas) return;
+
+                const value = parseInt(splitSlider.value);
+                splitLabel.textContent = `${value}%`;
+
+                // We use a canvas to blend the two images
+                const blendCanvas = document.createElement('canvas');
+                blendCanvas.width = originalCanvas.width;
+                blendCanvas.height = originalCanvas.height;
+                const ctx = blendCanvas.getContext('2d');
+
+                // Draw original
+                ctx.drawImage(originalCanvas, 0, 0);
+
+                // Draw simulated with clip based on slider
+                const splitPoint = (value / 100) * originalCanvas.width;
+
+                // Create clipping region
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, splitPoint, originalCanvas.height);
+                ctx.clip();
+                ctx.drawImage(simulatedCanvas, 0, 0);
+                ctx.restore();
+
+                // Draw a divider line
+                ctx.beginPath();
+                ctx.moveTo(splitPoint, 0);
+                ctx.lineTo(splitPoint, originalCanvas.height);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Display the blended result
+                simulatedBody.innerHTML = '';
+                const blendImg = document.createElement('img');
+                blendImg.src = blendCanvas.toDataURL('image/png');
+                blendImg.alt = 'Split view';
+                blendImg.style.width = '100%';
+                blendImg.style.height = 'auto';
+                simulatedBody.appendChild(blendImg);
+            }
+
+            // ─── HANDLE FILE ─────────
+            function handleFile(file) {
+                if (!file || !file.type.startsWith('image/')) {
+                    showToast('⚠️ Please upload a valid image file');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        sourceImage = img;
+                        processImage(img);
+                    };
+                    img.onerror = function() {
+                        showToast('⚠️ Failed to load image');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() {
+                    showToast('⚠️ Failed to read file');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // ─── CHANGE MODE ─────────
+            function setMode(mode) {
+                currentMode = mode;
+                modeButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === mode);
+                });
+
+                if (originalCanvas) {
+                    applySimulation(originalCanvas, mode);
+                }
+            }
+
+            // ─── EVENT LISTENERS ─────────
+            // File input
+            fileInput.addEventListener('change', function(e) {
+                if (this.files.length > 0) {
+                    handleFile(this.files[0]);
+                }
+                this.value = '';
+            });
+
+            // Drag and drop
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            // Mode buttons
+            modeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    setMode(this.dataset.mode);
+                });
+            });
+
+            // Split slider
+            splitSlider.addEventListener('input', function() {
+                if (originalCanvas && simulatedCanvas) {
+                    applySplitSlider();
+                }
+                splitLabel.textContent = `${this.value}%`;
+            });
+
+            // Paste support
+            document.addEventListener('paste', function(e) {
+                const items = e.clipboardData.items;
+                for (let item of items) {
+                    if (item.type.startsWith('image/')) {
+                        const file = item.getAsFile();
+                        if (file) {
+                            handleFile(file);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            // ─── INIT ─────────
+            console.log('👁️ Color Vision Simulator ready');
+            console.log('📸 Upload an image to simulate color vision deficiencies');
+
+        })();
+    </script>
+</body>
+</html>

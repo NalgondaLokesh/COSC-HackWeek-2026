@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐱 Cat Replacer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            width: 320px;
+            padding: 1.5rem 1.2rem 1.8rem;
+            background: linear-gradient(145deg, #f7faff 0%, #eef3fa 100%);
+            border-radius: 0;
+        }
+        h2 {
+            font-size: 1.3rem;
+            color: #0b1f33;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.3rem;
+        }
+        .sub {
+            color: #3f6182;
+            font-size: 0.85rem;
+            margin-bottom: 1.2rem;
+            border-left: 3px solid #4a9eff;
+            padding-left: 0.8rem;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .btn {
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 1.2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: #1a5bbf;
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 91, 191, 0.25);
+        }
+        .btn-primary:hover {
+            background: #1048a3;
+            transform: scale(1.02);
+        }
+        .btn-danger {
+            background: #e54c4c;
+            color: white;
+            box-shadow: 0 4px 12px rgba(229, 76, 76, 0.2);
+        }
+        .btn-danger:hover {
+            background: #c73a3a;
+            transform: scale(1.02);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #cbdae8;
+            color: #1a3752;
+        }
+        .btn-outline:hover {
+            background: #eef4fa;
+        }
+        .status {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #3f6182;
+            text-align: center;
+            padding: 0.4rem;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 1rem;
+        }
+        .status strong {
+            color: #1a5bbf;
+        }
+        .divider {
+            border-top: 1px solid #dce6f0;
+            margin: 0.8rem 0;
+        }
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #1a3752;
+        }
+        .toggle-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1a5bbf;
+            cursor: pointer;
+        }
+        .footer {
+            margin-top: 0.8rem;
+            font-size: 0.7rem;
+            color: #7a98b5;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h2>🐱 Cat Replacer</h2>
+    <div class="sub">Replace all images with random cats!</div>
+
+    <div class="btn-group">
+        <button class="btn btn-primary" id="replaceBtn">🐾 Replace Images Now</button>
+        <button class="btn btn-danger" id="restoreBtn">↩️ Restore Original</button>
+        <button class="btn btn-outline" id="toggleBtn">⏸️ Pause / Resume</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="toggle-row">
+        <span>🔁 Auto-replace on new pages</span>
+        <input type="checkbox" id="autoReplaceToggle" />
+    </div>
+
+    <div class="status" id="statusDisplay">
+        💡 Click "Replace" to start
+    </div>
+
+    <div class="footer">
+        🐈 Images from <strong>cataas.com</strong>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

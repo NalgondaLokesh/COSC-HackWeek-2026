@@ -1,0 +1,11 @@
+{
+  "name": "storage-explorer-icons",
+  "version": "1.0.0",
+  "description": "Convert SVG icons to PNG for Chrome extension",
+  "scripts": {
+    "convert": "node convert-icons.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}

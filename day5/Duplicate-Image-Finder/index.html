@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Similarity Detector</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">🔍 Image Similarity Detector</div>
+                <span class="badge">pHash · DCT</span>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" id="clearBtn">🗑️ Clear All</button>
+            </div>
+        </header>
+
+        <div class="sub">Upload images to detect duplicates and visually similar images using perceptual hashing</div>
+
+        <!-- Upload Area -->
+        <div class="upload-section">
+            <div class="drop-zone" id="dropZone">
+                <span class="drop-icon">📤</span>
+                <p>Drop images here or click to browse</p>
+                <div class="drop-sub">Supports JPEG, PNG, GIF, WebP, BMP, TIFF</div>
+                <input type="file" id="fileInput" accept="image/*" multiple />
+            </div>
+
+            <div class="upload-controls">
+                <button class="btn btn-primary" id="analyzeBtn">🔍 Analyze Images</button>
+                <span class="file-count" id="fileCount">0 files selected</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-section" id="resultsSection" style="display:none;">
+            <div class="results-header">
+                <h2>📊 Results</h2>
+                <div class="results-stats" id="resultsStats">
+                    <span class="stat-item">Total: <strong id="totalImages">0</strong></span>
+                    <span class="stat-item">Duplicates: <strong id="duplicateGroups">0</strong></span>
+                    <span class="stat-item">Selected: <strong id="selectedCount">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="action-bar" id="actionBar" style="display:none;">
+                <div class="action-buttons">
+                    <button class="btn btn-danger" id="deleteSelectedBtn">🗑️ Delete Selected</button>
+                    <button class="btn btn-success" id="keepBestBtn">⭐ Keep Best Quality</button>
+                    <button class="btn btn-secondary" id="selectAllBtn">✓ Select All</button>
+                    <button class="btn btn-secondary" id="deselectAllBtn">✗ Deselect All</button>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar" id="filterBar" style="display:none;">
+                <div class="filter-buttons">
+                    <button class="btn btn-filter active" data-filter="all" id="filterAll">📷 All Images</button>
+                    <button class="btn btn-filter" data-filter="duplicates" id="filterDuplicates">🔗 Duplicates</button>
+                    <button class="btn btn-filter" data-filter="unique" id="filterUnique">✨ Unique</button>
+                </div>
+            </div>
+
+            <!-- All Images Grid -->
+            <div class="image-grid" id="imageGrid"></div>
+
+            <!-- Duplicate Groups -->
+            <div class="groups-section" id="groupsSection">
+                <h3>🔗 Similar Image Groups</h3>
+                <div id="groupsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p id="loadingText">Analyzing images...</p>
+                <small id="loadingSubtext">Using perceptual hashing (pHash)</small>
+                <div class="progress-bar" id="progressBar" style="display:none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText" style="display:none;">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

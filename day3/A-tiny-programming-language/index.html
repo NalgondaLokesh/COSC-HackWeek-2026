@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiniLang · Programming Language</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(108, 92, 231, 0.24), transparent 25%),
+                linear-gradient(135deg, #060816 0%, #12142a 45%, #0b1020 100%);
+            color: #e8ebff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .app {
+            max-width: 1280px;
+            width: 100%;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.4rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 2.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b7cff, #22d3ee 55%, #58f5c0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .logo span {
+            font-size: 0.8rem;
+            -webkit-text-fill-color: #8ba0c2;
+            background: none;
+            font-weight: 500;
+            margin-left: 0.4rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            padding: 0.45rem 1rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.85rem;
+            color: #b6c1da;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 1.4rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 1rem;
+            }
+        }
+
+        .panel {
+            background: rgba(16, 20, 42, 0.92);
+            border-radius: 1.4rem;
+            padding: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(12px);
+        }
+
+        .panel-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #8da0c7;
+            margin-bottom: 0.8rem;
+        }
+
+        .editor-shell {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 0.75rem;
+            background: rgba(5, 8, 20, 0.8);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 480px;
+            background: transparent;
+            color: #f3f6ff;
+            border: none;
+            border-radius: 0.8rem;
+            padding: 0.7rem 0.85rem;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.93rem;
+            line-height: 1.65;
+            resize: vertical;
+            outline: none;
+            tab-size: 4;
+        }
+
+        textarea::placeholder {
+            color: #5d6a88;
+        }
+
+        textarea:focus {
+            box-shadow: inset 0 0 0 1px rgba(109, 92, 231, 0.35);
+            border-radius: 0.8rem;
+        }
+
+        .editor-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.6rem;
+            color: #7282a6;
+            font-size: 0.78rem;
+        }
+
+        .hint {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.25rem 0.55rem;
+            border-radius: 999px;
+        }
+
+        .output-area {
+            min-height: 480px;
+            max-height: 480px;
+            background: rgba(5, 8, 20, 0.82);
+            border-radius: 1rem;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.92rem;
+            line-height: 1.8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .output-area .line {
+            padding: 0.12rem 0;
+        }
+
+        .output-area .line-number {
+            color: #5a6688;
+            margin-right: 1rem;
+            user-select: none;
+        }
+
+        .output-area .output-value {
+            color: #69f2c3;
+        }
+
+        .output-area .error {
+            color: #ff8d8d;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.7rem;
+            margin-top: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.84rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.01em;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #2d7ff9);
+            color: white;
+            box-shadow: 0 10px 24px rgba(84, 87, 255, 0.28);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #c2cae8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.11);
+        }
+
+        .btn-success {
+            background: #24c784;
+            color: white;
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 18px rgba(36, 199, 132, 0.24);
+        }
+
+        .btn-danger {
+            background: #ff6f6f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 18px rgba(255, 111, 111, 0.24);
+        }
+
+        .examples {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+        }
+
+        .example-btn {
+            padding: 0.3rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #9aa8c9;
+            font-size: 0.74rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .example-btn:hover {
+            border-color: rgba(109, 92, 231, 0.6);
+            color: #f3f6ff;
+            background: rgba(109, 92, 231, 0.16);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #8a95b4;
+        }
+
+        .status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+        }
+
+        .status .dot.success {
+            background: #24c784;
+        }
+        .status .dot.error {
+            background: #ff6f6f;
+        }
+
+        .footer {
+            margin-top: 1.6rem;
+            text-align: center;
+            color: #6e7890;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <header>
+            <div class="logo">
+                ⚡ MiniLang
+                <span>v1.0</span>
+            </div>
+            <div class="badge">🔧 Variables · Loops · Conditions</div>
+        </header>
+
+        <div class="grid-2">
+            <!-- Editor -->
+            <div class="panel">
+                <div class="panel-title">📝 Editor</div>
+                <div class="editor-shell">
+                    <div class="editor-meta">
+                        <span>Write MiniLang code</span>
+                        <span class="hint">Ctrl + Enter to run</span>
+                    </div>
+                    <textarea id="editor" spellcheck="false"># FizzBuzz in MiniLang
+
+for i = 1 to 15 {
+    if i % 3 == 0 {
+        if i % 5 == 0 {
+            print "FizzBuzz"
+        } else {
+            print "Fizz"
+        }
+    } else {
+        if i % 5 == 0 {
+            print "Buzz"
+        } else {
+            print i
+        }
+    }
+}</textarea>
+                </div>
+
+                <div class="toolbar">
+                    <button class="btn btn-primary" id="runBtn">▶ Run</button>
+                    <button class="btn btn-secondary" id="clearBtn">🗑️ Clear Output</button>
+                    <button class="btn btn-secondary" id="resetBtn">🔄 Reset Code</button>
+                </div>
+
+                <div class="examples">
+                    <span style="color:#7d8aa6;font-size:0.72rem;padding-right:0.35rem;">Examples:</span>
+                    <button class="example-btn" data-example="fizzbuzz">FizzBuzz</button>
+                    <button class="example-btn" data-example="factorial">Factorial</button>
+                    <button class="example-btn" data-example="fibonacci">Fibonacci</button>
+                    <button class="example-btn" data-example="loops">Loops</button>
+                </div>
+            </div>
+
+            <!-- Output -->
+            <div class="panel">
+                <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>📤 Output</span>
+                    <span class="status" id="status">
+                        <span class="dot" id="statusDot"></span>
+                        <span id="statusText">Ready</span>
+                    </span>
+                </div>
+                <div class="output-area" id="output"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            MiniLang · A simple programming language with variables, loops, and conditions
+        </div>
+    </div>
+
+    <script src="minilang.js"></script>
+    <script>
+        // ─── UI CONTROLS ─────────
+        const editor = document.getElementById('editor');
+        const output = document.getElementById('output');
+        const runBtn = document.getElementById('runBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        const EXAMPLES = {
+            fizzbuzz: `# FizzBuzz in MiniLang
+
+for i = 1 to 15 {
+    if i % 3 == 0 {
+        if i % 5 == 0 {
+            print "FizzBuzz"
+        } else {
+            print "Fizz"
+        }
+    } else {
+        if i % 5 == 0 {
+            print "Buzz"
+        } else {
+            print i
+        }
+    }
+}`,
+
+            factorial: `# Factorial Calculator
+
+let n = 5
+let result = 1
+
+while n > 0 {
+    result = result * n
+    n = n - 1
+}
+
+print "Factorial is:"
+print result`,
+
+            fibonacci: `# Fibonacci Sequence
+
+let a = 0
+let b = 1
+let n = 10
+
+print "Fibonacci sequence:"
+print a
+print b
+
+for i = 1 to n - 2 {
+    let c = a + b
+    print c
+    a = b
+    b = c
+}`,
+
+            loops: `# Nested Loops Example
+
+let rows = 5
+
+for i = 1 to rows {
+    let line = ""
+    for j = 1 to i {
+        line = line + "*"
+    }
+    print line
+}
+
+print ""
+print "Countdown:"
+let count = 5
+while count > 0 {
+    print count
+    count = count - 1
+}
+print "Blast off! 🚀"`
+        };
+
+        function setStatus(type, message) {
+            statusDot.className = 'dot';
+            if (type === 'success') {
+                statusDot.classList.add('success');
+            } else if (type === 'error') {
+                statusDot.classList.add('error');
+            }
+            statusText.textContent = message;
+        }
+
+        function renderOutput(result) {
+            output.innerHTML = '';
+            
+            if (result.success) {
+                setStatus('success', `✅ Done (${result.output.length} lines)`);
+                if (result.output.length === 0) {
+                    const line = document.createElement('div');
+                    line.className = 'line';
+                    line.innerHTML = `<span class="output-value">(No output)</span>`;
+                    output.appendChild(line);
+                } else {
+                    result.output.forEach((lineText, index) => {
+                        const line = document.createElement('div');
+                        line.className = 'line';
+                        line.innerHTML = `
+                            <span class="line-number">${String(index + 1).padStart(2, ' ')}</span>
+                            <span class="output-value">${lineText}</span>
+                        `;
+                        output.appendChild(line);
+                    });
+                }
+            } else {
+                setStatus('error', `❌ Error`);
+                const line = document.createElement('div');
+                line.className = 'line';
+                line.innerHTML = `<span class="line-number">!</span><span class="error">${result.error}</span>`;
+                output.appendChild(line);
+            }
+        }
+
+        function runCode() {
+            const code = editor.value;
+            const result = window.MiniLang.run(code);
+            renderOutput(result);
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+            setStatus('success', 'Ready');
+            const line = document.createElement('div');
+            line.className = 'line';
+            line.innerHTML = `<span class="output-value">(Output cleared)</span>`;
+            output.appendChild(line);
+        }
+
+        function resetCode() {
+            editor.value = EXAMPLES.fizzbuzz;
+            clearOutput();
+            setStatus('success', 'Ready');
+        }
+
+        function loadExample(name) {
+            if (EXAMPLES[name]) {
+                editor.value = EXAMPLES[name];
+                clearOutput();
+                setStatus('success', `Loaded: ${name}`);
+            }
+        }
+
+        // ─── EVENT LISTENERS ─────────
+        runBtn.addEventListener('click', runCode);
+        clearBtn.addEventListener('click', clearOutput);
+        resetBtn.addEventListener('click', resetCode);
+
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                loadExample(this.dataset.example);
+            });
+        });
+
+        // Keyboard shortcut: Ctrl+Enter to run
+        editor.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+        });
+
+        // ─── INIT ─────────
+        resetCode();
+        console.log('⚡ MiniLang ready!');
+        console.log('📝 Examples: FizzBuzz, Factorial, Fibonacci, Loops');
+    </script>
+</body>
+</html>

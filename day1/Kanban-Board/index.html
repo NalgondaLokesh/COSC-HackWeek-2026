@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kanban Board · Trello style</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #f1f5f9;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+        .app {
+            max-width: 1100px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #0b1f33;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .sub {
+            color: #3b5f7e;
+            margin-bottom: 1.8rem;
+            border-left: 4px solid #2a7de1;
+            padding-left: 1rem;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            align-items: start;
+        }
+        .column {
+            background: #e9eef5;
+            border-radius: 1.4rem;
+            padding: 1rem 0.8rem 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+        }
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding: 0 0.2rem;
+        }
+        .column-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1d3752;
+            letter-spacing: 0.3px;
+        }
+        .column-count {
+            background: #d0dceb;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.1rem 0.6rem;
+            color: #1a3752;
+        }
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            min-height: 80px;
+            padding: 0.2rem 0;
+            flex: 1;
+        }
+        .card {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.7rem 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e1e9f2;
+            cursor: grab;
+            transition: 0.08s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            word-break: break-word;
+        }
+        .card:active {
+            cursor: grabbing;
+            box-shadow: 0 6px 16px rgba(0, 20, 40, 0.12);
+        }
+        .card.dragging {
+            opacity: 0.3;
+            transform: scale(0.96);
+        }
+        .card .text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #0b1f32;
+        }
+        .card .del-btn {
+            background: none;
+            border: none;
+            color: #8aa3bc;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0 0.1rem;
+            transition: 0.1s;
+            line-height: 1;
+        }
+        .card .del-btn:hover {
+            color: #b13e3e;
+        }
+        .card.drag-over {
+            border: 2px dashed #2a7de1;
+            background: #f0f7ff;
+        }
+        .add-card-form {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.8rem;
+        }
+        .add-card-form input {
+            flex: 1;
+            padding: 0.4rem 0.7rem;
+            border: 1px solid #d4dfe9;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            background: white;
+        }
+        .add-card-form input:focus {
+            outline: 2px solid #2a7de1;
+            border-color: transparent;
+        }
+        .add-card-form button {
+            background: #1a5bbf;
+            border: none;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .add-card-form button:hover {
+            background: #1048a3;
+        }
+        .empty-message {
+            color: #7a98b5;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 1.2rem 0;
+        }
+        .footer-tip {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #5d7b9a;
+            border-top: 1px solid #dce6f0;
+            padding-top: 1rem;
+            text-align: center;
+        }
+        @media (max-width: 500px) {
+            .board {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <h1>📋 Kanban Board</h1>
+    <div class="sub">Drag cards · add new · persists automatically</div>
+
+    <div class="board" id="board">
+        <!-- columns will be rendered by JS -->
+    </div>
+    <div class="footer-tip">💾 All changes saved to localStorage · drag cards between columns</div>
+</div>
+
+<script>
+    (function() {
+        // ----- CONFIG -----
+        const COLUMNS = ['To Do', 'In Progress', 'Done'];
+
+        // ----- STATE -----
+        let cards = []; // { id, text, column }
+
+        // ----- DOM refs -----
+        const board = document.getElementById('board');
+
+        // ----- helpers -----
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        }
+
+        // ----- STORAGE -----
+        function loadFromStorage() {
+            try {
+                const stored = localStorage.getItem('kanbanCards');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        cards = parsed;
+                        return;
+                    }
+                }
+            } catch (e) { /* ignore */ }
+            // default sample
+            cards = [
+                { id: generateId(), text: 'Design wireframes', column: 'To Do' },
+                { id: generateId(), text: 'Implement drag & drop', column: 'In Progress' },
+                { id: generateId(), text: 'Write documentation', column: 'Done' },
+            ];
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('kanbanCards', JSON.stringify(cards));
+        }
+
+        // ----- RENDER -----
+        function render() {
+            // clear board
+            board.innerHTML = '';
+
+            COLUMNS.forEach(colName => {
+                const colCards = cards.filter(c => c.column === colName);
+
+                // column container
+                const colDiv = document.createElement('div');
+                colDiv.className = 'column';
+                colDiv.dataset.column = colName;
+
+                // header
+                const header = document.createElement('div');
+                header.className = 'column-header';
+                header.innerHTML = `
+                    <span class="column-title">${colName}</span>
+                    <span class="column-count">${colCards.length}</span>
+                `;
+                colDiv.appendChild(header);
+
+                // card list (drop zone)
+                const list = document.createElement('div');
+                list.className = 'card-list';
+                list.dataset.column = colName;
+
+                if (colCards.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-message';
+                    empty.textContent = '— no cards —';
+                    list.appendChild(empty);
+                } else {
+                    colCards.forEach(card => {
+                        const cardEl = createCardElement(card);
+                        list.appendChild(cardEl);
+                    });
+                }
+
+                // drag & drop events on list (drop zone)
+                list.addEventListener('dragover', handleDragOver);
+                list.addEventListener('drop', handleDrop);
+
+                colDiv.appendChild(list);
+
+                // add card form
+                const form = document.createElement('div');
+                form.className = 'add-card-form';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'New card...';
+                input.dataset.column = colName;
+                const btn = document.createElement('button');
+                btn.textContent = 'Add';
+                btn.dataset.column = colName;
+                form.appendChild(input);
+                form.appendChild(btn);
+                colDiv.appendChild(form);
+
+                // add event
+                const addCard = () => {
+                    const text = input.value.trim();
+                    if (!text) return;
+                    cards.push({
+                        id: generateId(),
+                        text: text,
+                        column: colName,
+                    });
+                    saveToStorage();
+                    render();
+                };
+                btn.addEventListener('click', addCard);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') addCard();
+                });
+
+                board.appendChild(colDiv);
+            });
+
+            // re-attach drag events to cards (after render)
+            document.querySelectorAll('.card').forEach(el => {
+                el.addEventListener('dragstart', handleDragStart);
+                el.addEventListener('dragend', handleDragEnd);
+                // delete
+                const delBtn = el.querySelector('.del-btn');
+                if (delBtn) {
+                    delBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = this.dataset.id;
+                        cards = cards.filter(c => c.id !== id);
+                        saveToStorage();
+                        render();
+                    });
+                }
+            });
+        }
+
+        // ----- create card DOM -----
+        function createCardElement(card) {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.draggable = true;
+            div.dataset.id = card.id;
+            div.dataset.column = card.column;
+
+            const textSpan = document.createElement('span');
+            textSpan.className = 'text';
+            textSpan.textContent = card.text;
+            div.appendChild(textSpan);
+
+            const del = document.createElement('button');
+            del.className = 'del-btn';
+            del.dataset.id = card.id;
+            del.textContent = '✕';
+            div.appendChild(del);
+
+            return div;
+        }
+
+        // ----- DRAG & DROP handlers -----
+        let draggedCardId = null;
+
+        function handleDragStart(e) {
+            const cardEl = e.target.closest('.card');
+            if (!cardEl) return;
+            draggedCardId = cardEl.dataset.id;
+            e.dataTransfer.setData('text/plain', draggedCardId);
+            e.dataTransfer.effectAllowed = 'move';
+            // add dragging style
+            setTimeout(() => cardEl.classList.add('dragging'), 0);
+        }
+
+        function handleDragEnd(e) {
+            const cardEl = e.target.closest('.card');
+            if (cardEl) cardEl.classList.remove('dragging');
+            document.querySelectorAll('.card').forEach(el => el.classList.remove('drag-over'));
+            // reset
+            draggedCardId = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault(); // required for drop
+            e.dataTransfer.dropEffect = 'move';
+
+            // highlight drop zone
+            const list = e.target.closest('.card-list');
+            if (list) {
+                document.querySelectorAll('.card-list').forEach(l => l.classList.remove('drag-over'));
+                list.classList.add('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            // remove highlight
+            document.querySelectorAll('.card-list').forEach(l => l.classList.remove('drag-over'));
+
+            const targetList = e.target.closest('.card-list');
+            if (!targetList) return;
+
+            const targetColumn = targetList.dataset.column;
+            const cardId = e.dataTransfer.getData('text/plain');
+            if (!cardId) return;
+
+            // find card
+            const cardIndex = cards.findIndex(c => c.id === cardId);
+            if (cardIndex === -1) return;
+
+            const card = cards[cardIndex];
+            // if same column, do nothing (but we could reorder, but we keep simple)
+            if (card.column === targetColumn) {
+                // optional: reorder not implemented, but we can just return
+                return;
+            }
+
+            // update column
+            card.column = targetColumn;
+            saveToStorage();
+            render();
+        }
+
+        // ----- INIT -----
+        loadFromStorage();
+        render();
+
+        // (optional) if user drags from outside, we handle gracefully
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', (e) => e.preventDefault());
+
+        // expose to window for debugging
+        window.__kanban = { cards, render, saveToStorage };
+    })();
+</script>
+</body>
+</html>

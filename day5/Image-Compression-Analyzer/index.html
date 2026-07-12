@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Compressor · Compare Compression</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">📦 Image Compressor</div>
+                <span class="badge">Sharp · Real-time</span>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" id="helpBtn">⌨️ Shortcuts</button>
+                <button class="btn btn-secondary" id="resetBtn">🔄 Reset</button>
+            </div>
+        </header>
+
+        <div class="sub">Upload an image and adjust compression quality to see the difference in real-time</div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="drop-zone" id="dropZone">
+                <span class="drop-icon">📤</span>
+                <p>Drop an image here or click to browse</p>
+                <div class="drop-sub">Supports JPEG, PNG, WebP, GIF, TIFF</div>
+                <input type="file" id="fileInput" accept="image/*" />
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-section" id="controlsSection" style="display:none;">
+            <div class="control-group">
+                <label>Compression Quality</label>
+                <div class="slider-container">
+                    <input type="range" id="qualitySlider" min="10" max="100" value="70" />
+                    <span class="quality-value" id="qualityValue">70%</span>
+                </div>
+                <div class="quality-labels">
+                    <span>Low (10%)</span>
+                    <span>High (100%)</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Output Format</label>
+                <div class="format-selector">
+                    <button class="format-btn active" data-format="jpeg">JPEG</button>
+                    <button class="format-btn" data-format="png">PNG</button>
+                    <button class="format-btn" data-format="webp">WebP</button>
+                    <button class="format-btn" data-format="gif">GIF</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="compressBtn">🔄 Compress</button>
+        </div>
+
+        <!-- Results -->
+        <div class="results-section" id="resultsSection" style="display:none;">
+            <!-- Comparison View Toggle -->
+            <div class="comparison-toggle">
+                <button class="toggle-btn active" data-view="slider">🎚️ Slider Compare</button>
+                <button class="toggle-btn" data-view="sidebyside">📊 Side by Side</button>
+            </div>
+
+            <!-- Slider Comparison View -->
+            <div class="comparison-slider-view" id="sliderView">
+                <div class="slider-container">
+                    <div class="slider-image-wrapper original-wrapper">
+                        <img id="sliderOriginal" src="" alt="Original" />
+                        <div class="slider-label">Original</div>
+                    </div>
+                    <div class="slider-image-wrapper compressed-wrapper">
+                        <img id="sliderCompressed" src="" alt="Compressed" />
+                        <div class="slider-label">Compressed</div>
+                    </div>
+                    <div class="slider-handle" id="sliderHandle">
+                        <div class="slider-line"></div>
+                        <div class="slider-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8L22 12L18 16" />
+                                <path d="M6 8L2 12L6 16" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-hint">← Drag to compare →</div>
+            </div>
+
+            <!-- Side by Side Comparison View -->
+            <div class="comparison-view" id="sideBySideView" style="display:none;">
+                <div class="compare-card original">
+                    <div class="compare-header">
+                        <h3>🖼️ Original</h3>
+                        <div class="compare-meta" id="originalMeta">—</div>
+                    </div>
+                    <div class="compare-image" id="originalImage">
+                        <div class="placeholder-text">No image</div>
+                    </div>
+                    <div class="compare-footer" id="originalFooter">—</div>
+                </div>
+
+                <div class="compare-divider">
+                    <span>vs</span>
+                </div>
+
+                <div class="compare-card compressed">
+                    <div class="compare-header">
+                        <h3>📦 Compressed</h3>
+                        <div class="compare-meta" id="compressedMeta">—</div>
+                    </div>
+                    <div class="compare-image" id="compressedImage">
+                        <div class="placeholder-text">No image</div>
+                    </div>
+                    <div class="compare-footer" id="compressedFooter">—</div>
+                </div>
+            </div>
+
+            <!-- Metrics Dashboard -->
+            <div class="metrics-dashboard" id="metricsDashboard">
+                <h3>📊 Compression Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📦</div>
+                        <div class="metric-value" id="metricOriginalSize">—</div>
+                        <div class="metric-label">Original Size</div>
+                        <div class="metric-bar" id="barOriginalSize"></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🗜️</div>
+                        <div class="metric-value" id="metricCompressedSize">—</div>
+                        <div class="metric-label">Compressed Size</div>
+                        <div class="metric-bar" id="barCompressedSize"></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📉</div>
+                        <div class="metric-value" id="metricReduction">—</div>
+                        <div class="metric-label">Size Reduction</div>
+                        <div class="metric-bar" id="barReduction"></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-value" id="metricRatio">—</div>
+                        <div class="metric-label">Compression Ratio</div>
+                        <div class="metric-bar" id="barRatio"></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">✨</div>
+                        <div class="metric-value" id="metricQuality">—</div>
+                        <div class="metric-label">Quality Score</div>
+                        <div class="metric-bar" id="barQuality"></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📐</div>
+                        <div class="metric-value" id="metricDimensions">—</div>
+                        <div class="metric-label">Dimensions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download -->
+            <div class="download-section">
+                <button class="btn btn-success" id="downloadBtn" disabled>⬇️ Download Compressed Image</button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Compressing image...</p>
+                <small>Processing with Sharp</small>
+                <div class="loading-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span class="progress-text" id="progressText">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div class="modal-overlay" id="helpModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>⌨️ Keyboard Shortcuts</h3>
+                    <button class="modal-close" id="closeHelpModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                        <span>Compress image</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>Close modal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💰 Finance Tracker</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #f5f9fe;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .app {
+      max-width: 1100px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: #0b2a41;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.2rem;
+    }
+    .sub {
+      color: #3b5f7e;
+      margin-bottom: 1.8rem;
+      border-left: 4px solid #2a7de1;
+      padding-left: 1rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.8rem;
+    }
+    @media (max-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: white;
+      border-radius: 1.8rem;
+      padding: 1.5rem 1.5rem 1.8rem;
+      box-shadow: 0 8px 24px rgba(0,20,40,0.06);
+      border: 1px solid #eef3f9;
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #17334d;
+      margin-bottom: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge {
+      background: #e3ecf5;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #1c3d5c;
+    }
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+      align-items: center;
+    }
+    .input-row input, .input-row select {
+      padding: 0.5rem 0.7rem;
+      border: 1px solid #d4dfe9;
+      border-radius: 12px;
+      background: white;
+      font-size: 0.9rem;
+      flex: 1 1 90px;
+      min-width: 70px;
+    }
+    .input-row input:focus, .input-row select:focus {
+      outline: 2px solid #2a7de1;
+      border-color: transparent;
+    }
+    .btn {
+      background: white;
+      border: 1px solid #cbdae8;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #1a3752;
+      cursor: pointer;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .btn-primary {
+      background: #1a5bbf;
+      border: 1px solid #1a5bbf;
+      color: white;
+      box-shadow: 0 4px 10px -4px rgba(26,91,191,0.25);
+    }
+    .btn-primary:hover { background: #1048a3; }
+    .btn-outline { background: transparent; }
+    .btn-outline:hover { background: #eef4fa; }
+    .btn-sm { padding: 0.3rem 0.9rem; font-size: 0.8rem; }
+    .btn-danger { color: #b13e3e; border-color: #f0d2d2; }
+    .btn-danger:hover { background: #fce8e8; }
+    .expense-list {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 0.5rem;
+    }
+    .expense-item {
+      background: #fafcfe;
+      border-radius: 30px;
+      padding: 0.4rem 0.8rem 0.4rem 1.2rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #e6eef6;
+      font-size: 0.9rem;
+    }
+    .expense-item .info {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .expense-item .name { font-weight: 500; color: #0b1f32; }
+    .expense-item .meta { color: #3d5f7e; font-size: 0.8rem; }
+    .expense-item .amount { font-weight: 600; color: #1a3d5e; }
+    .expense-item .actions button {
+      background: none;
+      border: none;
+      margin-left: 0.2rem;
+      cursor: pointer;
+      color: #8aa3bc;
+      font-size: 1rem;
+      transition: 0.1s;
+    }
+    .expense-item .actions button:hover { color: #1a5bbf; }
+    .expense-item .actions .del:hover { color: #b13e3e; }
+    .empty-message {
+      color: #7a98b5;
+      text-align: center;
+      padding: 1.2rem 0;
+      font-size: 0.9rem;
+    }
+    .summary-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem 1.2rem;
+      background: #e9f1fa;
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+    .stat {
+      display: flex;
+      align-items: baseline;
+      gap: 0.2rem;
+    }
+    .stat .label { font-size: 0.8rem; color: #2c4b6b; }
+    .stat .value { font-weight: 700; font-size: 1.3rem; color: #0b2942; }
+    .stat .value.negative { color: #b13e3e; }
+    .chart-container {
+      background: #fafcfe;
+      border-radius: 1rem;
+      padding: 0.6rem;
+      margin: 0.8rem 0;
+      min-height: 120px;
+    }
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .bar-label {
+      width: 80px;
+      font-size: 0.8rem;
+      color: #1d3d5c;
+      text-align: right;
+    }
+    .bar-bg {
+      flex: 1;
+      height: 18px;
+      background: #e3ecf5;
+      border-radius: 30px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: #2a7de1;
+      border-radius: 30px;
+      width: 0%;
+      transition: 0.2s;
+    }
+    .bar-value {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1a3752;
+      min-width: 50px;
+    }
+    .budget-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f3f8ff;
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+      margin-top: 0.6rem;
+    }
+    .budget-input {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .budget-input input {
+      width: 90px;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid #cbdae8;
+      border-radius: 30px;
+    }
+    .month-selector {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.8rem;
+    }
+    .month-selector input {
+      padding: 0.3rem 0.6rem;
+      border: 1px solid #cbdae8;
+      border-radius: 30px;
+    }
+    .footnote {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #5d7b9a;
+      text-align: center;
+      border-top: 1px solid #e3ebf3;
+      padding-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <h1>💳 Finance Tracker</h1>
+  <div class="sub">Add expenses · categorize · monthly insights · budgets</div>
+
+  <div class="grid-2">
+    <!-- LEFT: add + list -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋 Expenses</span>
+        <span class="badge" id="expenseCount">0</span>
+      </div>
+      <div class="input-row">
+        <input type="text" id="expenseName" placeholder="Description" value="Coffee" style="flex:2;">
+        <input type="number" id="expenseAmount" placeholder="0.00" step="0.01" value="4.50" style="flex:1;">
+        <select id="expenseCategory" style="flex:1.2;">
+          <option value="Food">🍔 Food</option>
+          <option value="Transport">🚗 Transport</option>
+          <option value="Shopping">🛍️ Shopping</option>
+          <option value="Bills">💡 Bills</option>
+          <option value="Entertainment">🎬 Entertainment</option>
+          <option value="Other">📌 Other</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="addBtn">➕ Add</button>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+        <button class="btn btn-outline btn-sm" id="clearAllBtn">🗑️ Clear all</button>
+        <button class="btn btn-outline btn-sm" id="sampleBtn">📥 Sample</button>
+        <span style="font-size:0.8rem; color:#4b6f8e; margin-left:auto;">Total: <strong id="totalDisplay">0.00</strong></span>
+      </div>
+      <div class="expense-list" id="expenseList">
+        <div class="empty-message">No expenses added</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: summary + chart + budget -->
+    <div class="card">
+      <div class="card-title">
+        <span>📊 Summary</span>
+        <span class="badge" id="monthLabel">This month</span>
+      </div>
+      <div class="month-selector">
+        <label style="font-size:0.85rem;">Month:</label>
+        <input type="month" id="monthPicker" value="2026-07">
+        <button class="btn btn-outline btn-sm" id="refreshBtn">⟳ Refresh</button>
+      </div>
+      <div class="summary-stats" id="summaryStats">
+        <div class="stat"><span class="label">Total</span><span class="value" id="monthTotal">0.00</span></div>
+        <div class="stat"><span class="label">Avg/day</span><span class="value" id="monthAvg">0.00</span></div>
+        <div class="stat"><span class="label">Categories</span><span class="value" id="categoryCount">0</span></div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-container" id="chartContainer">
+        <div style="font-size:0.85rem; color:#2d4b6a; margin-bottom:0.3rem;">📊 by category</div>
+        <div id="barChart" class="bar-chart">
+          <div class="empty-message" style="padding:0.4rem;">No data</div>
+        </div>
+      </div>
+
+      <!-- Budget -->
+      <div class="budget-row">
+        <span style="font-weight:500;">🎯 Budget limit</span>
+        <div class="budget-input">
+          <input type="number" id="budgetInput" placeholder="0.00" step="0.01" value="300">
+          <button class="btn btn-primary btn-sm" id="setBudgetBtn">Set</button>
+        </div>
+        <span id="budgetStatus" style="font-size:0.9rem; font-weight:500;">—</span>
+      </div>
+    </div>
+  </div>
+  <div class="footnote">All data stored in your browser (localStorage). Edit/delete any expense.</div>
+</div>
+
+<script>
+  (function() {
+    // ---- state ----
+    let expenses = [];          // { id, name, amount, category, date }
+    let budgetLimit = 300;
+    let currentMonth = '2026-07'; // YYYY-MM
+
+    // DOM
+    const expenseName = document.getElementById('expenseName');
+    const expenseAmount = document.getElementById('expenseAmount');
+    const expenseCategory = document.getElementById('expenseCategory');
+    const addBtn = document.getElementById('addBtn');
+    const expenseList = document.getElementById('expenseList');
+    const expenseCount = document.getElementById('expenseCount');
+    const totalDisplay = document.getElementById('totalDisplay');
+    const monthPicker = document.getElementById('monthPicker');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const monthTotal = document.getElementById('monthTotal');
+    const monthAvg = document.getElementById('monthAvg');
+    const categoryCount = document.getElementById('categoryCount');
+    const monthLabel = document.getElementById('monthLabel');
+    const barChart = document.getElementById('barChart');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const budgetInput = document.getElementById('budgetInput');
+    const setBudgetBtn = document.getElementById('setBudgetBtn');
+    const budgetStatus = document.getElementById('budgetStatus');
+
+    // ---- helpers ----
+    function generateId() { return Date.now() + Math.random().toString(36).slice(2, 8); }
+
+    function loadFromStorage() {
+      try {
+        const stored = localStorage.getItem('financeData');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          expenses = parsed.expenses || [];
+          budgetLimit = parsed.budgetLimit || 300;
+          currentMonth = parsed.currentMonth || '2026-07';
+          monthPicker.value = currentMonth;
+          budgetInput.value = budgetLimit;
+        } else {
+          // default sample
+          expenses = [];
+          budgetLimit = 300;
+          currentMonth = '2026-07';
+        }
+      } catch (e) { expenses = []; }
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('financeData', JSON.stringify({
+        expenses: expenses,
+        budgetLimit: budgetLimit,
+        currentMonth: currentMonth
+      }));
+    }
+
+    function getMonthExpenses(month) {
+      return expenses.filter(e => e.date && e.date.startsWith(month));
+    }
+
+    function getCategoryTotals(month) {
+      const monthExps = getMonthExpenses(month);
+      const map = {};
+      monthExps.forEach(e => {
+        const cat = e.category || 'Other';
+        map[cat] = (map[cat] || 0) + e.amount;
+      });
+      return map;
+    }
+
+    function getTotalForMonth(month) {
+      return getMonthExpenses(month).reduce((sum, e) => sum + e.amount, 0);
+    }
+
+    function getDaysInMonth(month) {
+      const [year, m] = month.split('-').map(Number);
+      return new Date(year, m, 0).getDate();
+    }
+
+    // ---- render ----
+    function render() {
+      const month = currentMonth;
+      const monthExps = getMonthExpenses(month);
+      const total = getTotalForMonth(month);
+      const days = getDaysInMonth(month);
+      const avg = days > 0 ? total / days : 0;
+      const catMap = getCategoryTotals(month);
+      const catCount = Object.keys(catMap).length;
+
+      // expense list
+      if (expenses.length === 0) {
+        expenseList.innerHTML = `<div class="empty-message">No expenses yet</div>`;
+      } else {
+        let html = '';
+        // show all expenses (not only month) but we can filter? we show all with indicator
+        const sorted = [...expenses].sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+        sorted.forEach(e => {
+          const isCurrent = e.date && e.date.startsWith(month);
+          const prefix = isCurrent ? '' : '📅 ';
+          html += `
+            <div class="expense-item" style="${!isCurrent ? 'opacity:0.7;' : ''}">
+              <div class="info">
+                <span class="name">${prefix}${escapeHtml(e.name)}</span>
+                <span class="meta">${e.category || 'Other'} · ${e.date ? e.date.slice(5) : '—'}</span>
+                <span class="amount">${e.amount.toFixed(2)}</span>
+              </div>
+              <div class="actions">
+                <button class="edit-btn" data-id="${e.id}" title="Edit">✏️</button>
+                <button class="del" data-id="${e.id}" title="Delete">🗑️</button>
+              </div>
+            </div>
+          `;
+        });
+        expenseList.innerHTML = html;
+        // attach events
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const expense = expenses.find(e => e.id === id);
+            if (expense) {
+              expenseName.value = expense.name;
+              expenseAmount.value = expense.amount;
+              expenseCategory.value = expense.category || 'Other';
+              // remove the old one, will re-add on add
+              expenses = expenses.filter(e => e.id !== id);
+              render();
+              saveToStorage();
+            }
+          });
+        });
+        document.querySelectorAll('.del').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            if (confirm('Delete this expense?')) {
+              expenses = expenses.filter(e => e.id !== id);
+              render();
+              saveToStorage();
+            }
+          });
+        });
+      }
+
+      // summary stats
+      expenseCount.textContent = expenses.length;
+      totalDisplay.textContent = expenses.reduce((s, e) => s + e.amount, 0).toFixed(2);
+      monthTotal.textContent = total.toFixed(2);
+      monthAvg.textContent = avg.toFixed(2);
+      categoryCount.textContent = catCount;
+      monthLabel.textContent = month;
+
+      // chart
+      if (catCount === 0) {
+        barChart.innerHTML = `<div class="empty-message" style="padding:0.4rem;">No category data</div>`;
+      } else {
+        const maxVal = Math.max(...Object.values(catMap), 1);
+        let chartHtml = '';
+        for (const [cat, val] of Object.entries(catMap)) {
+          const pct = (val / maxVal) * 100;
+          chartHtml += `
+            <div class="bar-row">
+              <span class="bar-label">${cat}</span>
+              <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;"></div></div>
+              <span class="bar-value">${val.toFixed(2)}</span>
+            </div>
+          `;
+        }
+        barChart.innerHTML = chartHtml;
+      }
+
+      // budget status
+      const budget = budgetLimit;
+      if (budget > 0) {
+        const used = total;
+        const pct = Math.min((used / budget) * 100, 100);
+        let color = '#2a7de1';
+        let status = `${used.toFixed(2)} / ${budget.toFixed(2)}`;
+        if (used > budget) { color = '#b13e3e'; status = `⚠️ ${used.toFixed(2)} / ${budget.toFixed(2)}`; }
+        else if (used > budget * 0.8) { color = '#d99b2a'; }
+        budgetStatus.innerHTML = `<span style="color:${color};">${status}</span>`;
+      } else {
+        budgetStatus.textContent = 'No budget set';
+      }
+
+      saveToStorage();
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- add expense ----
+    function addExpense(name, amount, category, date) {
+      if (!name.trim()) { alert('Enter a description.'); return false; }
+      const amt = parseFloat(amount);
+      if (isNaN(amt) || amt <= 0) { alert('Enter a valid positive amount.'); return false; }
+      if (!date) date = currentMonth + '-01'; // fallback
+      expenses.push({
+        id: generateId(),
+        name: name.trim(),
+        amount: amt,
+        category: category || 'Other',
+        date: date
+      });
+      return true;
+    }
+
+    // ---- event handlers ----
+    addBtn.addEventListener('click', function() {
+      const name = expenseName.value.trim();
+      const amount = parseFloat(expenseAmount.value);
+      const category = expenseCategory.value;
+      const date = currentMonth + '-01'; // use current month
+      if (addExpense(name, amount, category, date)) {
+        render();
+        expenseName.value = '';
+        expenseName.focus();
+      }
+    });
+
+    // enter key
+    expenseName.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+    expenseAmount.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+
+    // clear all
+    clearAllBtn.addEventListener('click', function() {
+      if (expenses.length === 0) return;
+      if (confirm('Delete all expenses?')) {
+        expenses = [];
+        render();
+      }
+    });
+
+    // sample
+    sampleBtn.addEventListener('click', function() {
+      const samples = [
+        { name: 'Groceries', amount: 85.30, category: 'Food', date: '2026-07-03' },
+        { name: 'Gas', amount: 45.00, category: 'Transport', date: '2026-07-05' },
+        { name: 'Netflix', amount: 15.99, category: 'Entertainment', date: '2026-07-07' },
+        { name: 'Electricity', amount: 62.40, category: 'Bills', date: '2026-07-10' },
+        { name: 'Dinner out', amount: 38.20, category: 'Food', date: '2026-07-12' },
+        { name: 'New shoes', amount: 75.00, category: 'Shopping', date: '2026-07-15' }
+      ];
+      if (expenses.length > 0 && !confirm('This will add sample expenses to existing ones. Continue?')) return;
+      samples.forEach(s => {
+        expenses.push({ id: generateId(), ...s });
+      });
+      render();
+    });
+
+    // month change
+    function updateMonth() {
+      currentMonth = monthPicker.value;
+      render();
+    }
+    monthPicker.addEventListener('change', updateMonth);
+    refreshBtn.addEventListener('click', updateMonth);
+
+    // budget
+    setBudgetBtn.addEventListener('click', function() {
+      const val = parseFloat(budgetInput.value);
+      if (isNaN(val) || val < 0) { alert('Enter a valid budget amount.'); return; }
+      budgetLimit = val;
+      render();
+    });
+    budgetInput.addEventListener('keydown', e => { if (e.key === 'Enter') setBudgetBtn.click(); });
+
+    // ---- init ----
+    loadFromStorage();
+    render();
+  })();
+</script>
+</body>
+</html>

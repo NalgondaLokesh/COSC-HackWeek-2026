@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Whiteboard</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .light-mode {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e4e6eb;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666666;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            white-space: nowrap;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            background: var(--glass-bg);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #44ff44;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .user-count {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            background: var(--glass-bg);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .dark-mode-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--accent);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            flex-wrap: wrap;
+            overflow-x: auto;
+        }
+
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.6rem;
+            background: var(--glass-bg);
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            flex-wrap: wrap;
+        }
+
+        .tool-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-right: 0.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .color-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .color-btn.active {
+            border-color: var(--text-primary);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .color-picker-wrapper input[type="color"] {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch {
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+        }
+
+        .size-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .size-btn:hover {
+            background: var(--accent);
+        }
+
+        .size-btn.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .size-dot {
+            background: var(--text-primary);
+            border-radius: 50%;
+        }
+
+        .tool-btn {
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .tool-btn:hover {
+            background: var(--accent);
+        }
+
+        .tool-btn.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .clear-btn {
+            background: #ff4444;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #ff6666;
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        /* Drawing Indicator */
+        .drawing-indicator {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            font-size: 0.8rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .drawing-indicator.show {
+            display: flex;
+        }
+
+        .drawing-indicator .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 90%;
+        }
+
+        .toast {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 0.7rem 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            max-width: 320px;
+            font-size: 0.85rem;
+        }
+
+        .toast.success {
+            border-left: 4px solid #44ff44;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ff4444;
+        }
+
+        .toast.info {
+            border-left: 4px solid #4488ff;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Brush Preview */
+        .brush-preview {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: none;
+            opacity: 0.5;
+        }
+
+        /* Text Input */
+        .text-input {
+            position: fixed;
+            background: transparent;
+            border: 2px dashed var(--accent);
+            padding: 5px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 16px;
+            color: #000;
+            outline: none;
+            z-index: 1000;
+            min-width: 100px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 0.6rem 1rem;
+            }
+            .toolbar {
+                padding: 0.4rem 0.6rem;
+                gap: 0.4rem;
+            }
+            .tool-group {
+                padding: 0.2rem 0.4rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.5rem 0.8rem;
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            .toolbar {
+                padding: 0.3rem 0.5rem;
+                gap: 0.3rem;
+                justify-content: flex-start;
+            }
+
+            .tool-group {
+                gap: 0.2rem;
+                padding: 0.2rem 0.3rem;
+            }
+
+            .tool-label {
+                font-size: 0.6rem;
+                display: none;
+            }
+
+            .color-btn {
+                width: 24px;
+                height: 24px;
+            }
+
+            .size-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .tool-btn {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.7rem;
+            }
+
+            .canvas-container {
+                padding: 0.5rem;
+            }
+
+            .toast-container {
+                top: 6rem;
+                right: 0.5rem;
+                left: 0.5rem;
+            }
+
+            .toast {
+                max-width: 100%;
+                font-size: 0.8rem;
+            }
+
+            .drawing-indicator {
+                bottom: 1rem;
+                padding: 0.4rem 1rem;
+                font-size: 0.7rem;
+            }
+
+            .connection-status {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+            }
+
+            .user-count {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                overflow: auto;
+            }
+
+            .header-controls {
+                gap: 0.3rem;
+            }
+
+            .color-btn {
+                width: 20px;
+                height: 20px;
+            }
+
+            .color-picker-wrapper {
+                width: 20px;
+                height: 20px;
+            }
+
+            .size-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.6rem;
+            }
+
+            .tool-btn {
+                padding: 0.15rem 0.4rem;
+                font-size: 0.65rem;
+            }
+
+            .tool-group {
+                gap: 0.15rem;
+            }
+        }
+
+        /* Touch support */
+        @media (hover: none) {
+            .tool-btn:hover {
+                background: var(--glass-bg);
+            }
+
+            .tool-btn:active {
+                background: var(--accent);
+            }
+
+            .brush-preview {
+                display: none !important;
+            }
+        }
+
+        /* Scrollbar styling */
+        .toolbar::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .toolbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .toolbar::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">🎨 Whiteboard</div>
+            <div class="header-controls">
+                <div class="connection-status">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="connectionStatus">Connecting...</span>
+                </div>
+                <div class="user-count">
+                    <span>👥</span>
+                    <span id="userCount">0</span>
+                </div>
+                <button class="dark-mode-toggle" id="darkModeToggle">🌙</button>
+            </div>
+        </header>
+
+        <div class="toolbar" id="toolbar">
+            <div class="tool-group">
+                <span class="tool-label">Tools</span>
+                <button class="tool-btn active" id="penTool" data-tool="pen">✏️ Pen</button>
+                <button class="tool-btn" id="eraserTool" data-tool="eraser">🧹 Eraser</button>
+                <button class="tool-btn" id="lineTool" data-tool="line">📏 Line</button>
+                <button class="tool-btn" id="rectTool" data-tool="rect">⬜ Rect</button>
+                <button class="tool-btn" id="circleTool" data-tool="circle">⭕ Circle</button>
+                <button class="tool-btn" id="textTool" data-tool="text">📝 Text</button>
+            </div>
+
+            <div class="tool-group">
+                <span class="tool-label">Actions</span>
+                <button class="tool-btn" id="undoBtn">↩️ Undo</button>
+                <button class="tool-btn" id="redoBtn">↪️ Redo</button>
+                <button class="tool-btn" id="saveBtn">💾 Save</button>
+            </div>
+
+            <div class="tool-group">
+                <span class="tool-label">Colors</span>
+                <button class="color-btn active" style="background: #000000;" data-color="#000000"></button>
+                <button class="color-btn" style="background: #ff0000;" data-color="#ff0000"></button>
+                <button class="color-btn" style="background: #0000ff;" data-color="#0000ff"></button>
+                <button class="color-btn" style="background: #00ff00;" data-color="#00ff00"></button>
+                <button class="color-btn" style="background: #ffff00;" data-color="#ffff00"></button>
+                <button class="color-btn" style="background: #800080;" data-color="#800080"></button>
+                <button class="color-btn" style="background: #ff69b4;" data-color="#ff69b4"></button>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="customColor" value="#000000">
+                </div>
+            </div>
+
+            <div class="tool-group">
+                <span class="tool-label">Size</span>
+                <button class="size-btn" data-size="2">
+                    <div class="size-dot" style="width: 2px; height: 2px;"></div>
+                </button>
+                <button class="size-btn active" data-size="5">
+                    <div class="size-dot" style="width: 5px; height: 5px;"></div>
+                </button>
+                <button class="size-btn" data-size="12">
+                    <div class="size-dot" style="width: 12px; height: 12px;"></div>
+                </button>
+                <button class="size-btn" data-size="20">
+                    <div class="size-dot" style="width: 20px; height: 20px;"></div>
+                </button>
+            </div>
+
+            <div class="tool-group">
+                <button class="tool-btn clear-btn" id="clearBtn">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="drawing-indicator" id="drawingIndicator">
+            <div class="dot"></div>
+            <span>Someone is drawing...</span>
+        </div>
+
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script>
+        // ─── CONFIGURATION ─────────
+        // Auto-detect server URL based on environment
+        const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : window.location.origin; // Use same domain in production
+
+        console.log('📡 Server URL:', SERVER_URL);
+
+        // ─── STATE ─────────
+        let socket = null;
+        let isDrawing = false;
+        let currentTool = 'pen';
+        let currentColor = '#000000';
+        let currentSize = 5;
+        let lastX = 0;
+        let lastY = 0;
+        let startX = 0;
+        let startY = 0;
+        let isConnected = false;
+        let undoStack = [];
+        let redoStack = [];
+        let tempCanvas = null;
+        let tempCtx = null;
+        let brushPreview = null;
+        let isLocalMode = false;
+        let syncInterval = null;
+
+        // ─── DOM ELEMENTS ─────────
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusDot = document.getElementById('statusDot');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const userCountEl = document.getElementById('userCount');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const drawingIndicator = document.getElementById('drawingIndicator');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // ─── CANVAS SETUP ─────────
+        function setupCanvas() {
+            const container = document.getElementById('canvasContainer');
+            const rect = container.getBoundingClientRect();
+            const padding = 40;
+            
+            const maxWidth = Math.min(1200, rect.width - padding);
+            const maxHeight = Math.min(800, rect.height - padding);
+            
+            // Set actual canvas size
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
+            
+            // Set display size via CSS
+            canvas.style.width = maxWidth + 'px';
+            canvas.style.height = maxHeight + 'px';
+            
+            // Fill with white
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            console.log('📐 Canvas setup:', { width: canvas.width, height: canvas.height });
+            
+            // Create temp canvas for shapes
+            tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            tempCtx = tempCanvas.getContext('2d');
+            
+            // Create brush preview
+            brushPreview = document.createElement('div');
+            brushPreview.className = 'brush-preview';
+            document.body.appendChild(brushPreview);
+            
+            // Save initial state
+            saveState();
+        }
+
+        // ─── UNDO / REDO ─────────
+        function saveState() {
+            try {
+                if (undoStack.length > 50) undoStack.shift();
+                undoStack.push(canvas.toDataURL());
+                redoStack = [];
+                // console.log('💾 State saved, stack size:', undoStack.length);
+            } catch (error) {
+                console.error('Error saving state:', error);
+            }
+        }
+
+        function undo() {
+            if (undoStack.length > 1) {
+                redoStack.push(undoStack.pop());
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    showToast('↩️ Undo', 'info');
+                };
+                img.onerror = () => showToast('❌ Undo failed', 'error');
+                img.src = undoStack[undoStack.length - 1];
+            } else {
+                showToast('⚠️ Nothing to undo', 'info');
+            }
+        }
+
+        function redo() {
+            if (redoStack.length > 0) {
+                const state = redoStack.pop();
+                undoStack.push(state);
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    showToast('↪️ Redo', 'info');
+                };
+                img.onerror = () => showToast('❌ Redo failed', 'error');
+                img.src = state;
+            } else {
+                showToast('⚠️ Nothing to redo', 'info');
+            }
+        }
+
+        // ─── SAVE IMAGE ─────────
+        function saveAsImage() {
+            try {
+                const link = document.createElement('a');
+                link.download = 'whiteboard-' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('💾 Image saved!', 'success');
+            } catch (error) {
+                console.error('Error saving image:', error);
+                showToast('❌ Failed to save image', 'error');
+            }
+        }
+
+        // ─── CLEAR CANVAS ─────────
+        function clearCanvas(emit = true) {
+            if (!confirm('Are you sure you want to clear the board?')) return;
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            saveState();
+            
+            if (emit && socket && socket.connected) {
+                socket.emit('clear');
+            }
+            
+            showToast('🗑️ Board cleared', 'info');
+        }
+
+        // ─── DRAWING FUNCTIONS ─────────
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            if (e.touches && e.touches[0]) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+                e.preventDefault();
+            } else if (e.clientX !== undefined && e.clientY !== undefined) {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            } else {
+                return { x: 0, y: 0 };
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function drawStroke(x0, y0, x1, y1, color, size, emit = true) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = 'white';
+            } else {
+                ctx.strokeStyle = color;
+            }
+            
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            if (emit && socket && socket.connected) {
+                socket.emit('draw', {
+                    x0, y0, x1, y1,
+                    color: currentTool === 'eraser' ? 'white' : color,
+                    size: size
+                });
+            }
+        }
+
+        function drawDot(x, y, color, size, emit = true) {
+            ctx.beginPath();
+            ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+            
+            if (currentTool === 'eraser') {
+                ctx.fillStyle = 'white';
+            } else {
+                ctx.fillStyle = color;
+            }
+            
+            ctx.fill();
+            
+            if (emit && socket && socket.connected) {
+                socket.emit('dot', {
+                    x, y,
+                    color: currentTool === 'eraser' ? 'white' : color,
+                    size: size
+                });
+            }
+        }
+
+        function drawLine(x0, y0, x1, y1, color, size, emit = true) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.stroke();
+            
+            if (emit && socket && socket.connected) {
+                socket.emit('draw-line', { x0, y0, x1, y1, color, size });
+            }
+        }
+
+        function drawRect(x, y, w, h, color, size, emit = true) {
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.stroke();
+            
+            if (emit && socket && socket.connected) {
+                socket.emit('draw-rect', { x, y, w, h, color, size });
+            }
+        }
+
+        function drawCircle(x, y, radius, color, size, emit = true) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.stroke();
+            
+            if (emit && socket && socket.connected) {
+                socket.emit('draw-circle', { x, y, radius, color, size });
+            }
+        }
+
+        function createTextInput(x, y) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'text-input';
+            input.style.left = x + 'px';
+            input.style.top = y + 'px';
+            input.style.color = currentColor;
+            input.style.fontSize = (currentSize * 2 + 10) + 'px';
+            input.placeholder = 'Type text...';
+            document.body.appendChild(input);
+            input.focus();
+            
+            input.addEventListener('blur', () => {
+                if (input.value.trim()) {
+                    const text = input.value.trim();
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const scaleX = canvas.width / canvasRect.width;
+                    const scaleY = canvas.height / canvasRect.height;
+                    
+                    // Convert screen coords to canvas coords
+                    const canvasX = (parseFloat(input.style.left) - canvasRect.left) * scaleX;
+                    const canvasY = (parseFloat(input.style.top) - canvasRect.top) * scaleY;
+                    
+                    ctx.font = `${currentSize * 2 + 10}px 'Segoe UI', sans-serif`;
+                    ctx.fillStyle = currentColor;
+                    ctx.fillText(text, canvasX, canvasY + 20);
+                    saveState();
+                    
+                    if (socket && socket.connected) {
+                        socket.emit('draw-text', { 
+                            x: canvasX, 
+                            y: canvasY, 
+                            text, 
+                            color: currentColor, 
+                            size: currentSize 
+                        });
+                    }
+                    showToast('📝 Text added', 'success');
+                }
+                input.remove();
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    input.remove();
+                }
+            });
+        }
+
+        // ─── DRAWING HANDLERS ─────────
+        function startDrawing(e) {
+            e.preventDefault();
+            const coords = getCoordinates(e);
+            if (!coords || coords.x === undefined || coords.y === undefined) return;
+            
+            isDrawing = true;
+            lastX = coords.x;
+            lastY = coords.y;
+            startX = coords.x;
+            startY = coords.y;
+            
+            if (currentTool === 'text') {
+                const rect = canvas.getBoundingClientRect();
+                const screenX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                const screenY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+                createTextInput(screenX, screenY);
+                isDrawing = false;
+                return;
+            }
+            
+            if (socket && socket.connected) {
+                socket.emit('drawing-status', { isDrawing: true, userName: 'User' });
+            }
+            
+            // For shape tools, save state on start
+            if (['line', 'rect', 'circle'].includes(currentTool)) {
+                tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.drawImage(canvas, 0, 0);
+            } else {
+                drawDot(lastX, lastY, currentColor, currentSize, true);
+            }
+        }
+
+        function draw(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            
+            const coords = getCoordinates(e);
+            if (!coords || coords.x === undefined || coords.y === undefined) return;
+            
+            if (['line', 'rect', 'circle'].includes(currentTool)) {
+                // Restore from temp canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(tempCanvas, 0, 0);
+                
+                if (currentTool === 'line') {
+                    drawLine(startX, startY, coords.x, coords.y, currentColor, currentSize, false);
+                } else if (currentTool === 'rect') {
+                    drawRect(startX, startY, coords.x - startX, coords.y - startY, currentColor, currentSize, false);
+                } else if (currentTool === 'circle') {
+                    const radius = Math.sqrt(Math.pow(coords.x - startX, 2) + Math.pow(coords.y - startY, 2));
+                    drawCircle(startX, startY, radius, currentColor, currentSize, false);
+                }
+            } else {
+                drawStroke(lastX, lastY, coords.x, coords.y, currentColor, currentSize, true);
+                lastX = coords.x;
+                lastY = coords.y;
+            }
+            
+            updateBrushPreview(e);
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            
+            if (socket && socket.connected) {
+                socket.emit('drawing-status', { isDrawing: false, userName: 'User' });
+            }
+            
+            // For shape tools, emit final shape
+            if (['line', 'rect', 'circle'].includes(currentTool) && e) {
+                const coords = getCoordinates(e);
+                if (coords && coords.x !== undefined && coords.y !== undefined) {
+                    if (currentTool === 'line') {
+                        if (socket && socket.connected) {
+                            socket.emit('draw-line', { 
+                                x0: startX, y0: startY, 
+                                x1: coords.x, y1: coords.y, 
+                                color: currentColor, size: currentSize 
+                            });
+                        }
+                    } else if (currentTool === 'rect') {
+                        if (socket && socket.connected) {
+                            socket.emit('draw-rect', { 
+                                x: startX, y: startY, 
+                                w: coords.x - startX, h: coords.y - startY, 
+                                color: currentColor, size: currentSize 
+                            });
+                        }
+                    } else if (currentTool === 'circle') {
+                        const radius = Math.sqrt(Math.pow(coords.x - startX, 2) + Math.pow(coords.y - startY, 2));
+                        if (socket && socket.connected) {
+                            socket.emit('draw-circle', { 
+                                x: startX, y: startY, radius, 
+                                color: currentColor, size: currentSize 
+                            });
+                        }
+                    }
+                }
+            }
+            
+            saveState();
+            hideBrushPreview();
+        }
+
+        // ─── BRUSH PREVIEW ─────────
+        function updateBrushPreview(e) {
+            if (!brushPreview) return;
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            
+            if (!clientX || !clientY) return;
+            
+            const size = currentTool === 'eraser' ? currentSize * 2 : currentSize;
+            brushPreview.style.left = (clientX - size / 2) + 'px';
+            brushPreview.style.top = (clientY - size / 2) + 'px';
+            brushPreview.style.width = size + 'px';
+            brushPreview.style.height = size + 'px';
+            brushPreview.style.background = currentTool === 'eraser' ? 'rgba(255,255,255,0.5)' : currentColor;
+            brushPreview.style.display = 'block';
+        }
+
+        function hideBrushPreview() {
+            if (brushPreview) brushPreview.style.display = 'none';
+        }
+
+        // ─── SOCKET.IO ─────────
+        function connectSocket() {
+            try {
+                socket = io(SERVER_URL, {
+                    transports: ['websocket', 'polling'],
+                    reconnection: true,
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 5000,
+                    reconnectionAttempts: 10,
+                    timeout: 10000,
+                    pingTimeout: 60000,
+                    pingInterval: 25000
+                });
+
+                socket.on('connect', () => {
+                    isConnected = true;
+                    isLocalMode = false;
+                    updateConnectionStatus(true);
+                    showToast('✅ Connected to server', 'success');
+                    console.log('🟢 Connected to server');
+                });
+
+                socket.on('disconnect', () => {
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                    showToast('❌ Disconnected from server', 'error');
+                    console.log('🔴 Disconnected from server');
+                });
+
+                socket.on('connect_error', (error) => {
+                    console.error('Connection error:', error);
+                    updateConnectionStatus(false);
+                    showToast('⚠️ Connection failed. Retrying...', 'error');
+                });
+
+                socket.on('user-count', (count) => {
+                    userCountEl.textContent = count || 0;
+                });
+
+                // ─── DRAWING EVENTS ─────────
+                socket.on('draw', (data) => {
+                    if (!data) return;
+                    drawStroke(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
+                });
+
+                socket.on('dot', (data) => {
+                    if (!data) return;
+                    drawDot(data.x, data.y, data.color, data.size, false);
+                });
+
+                socket.on('draw-line', (data) => {
+                    if (!data) return;
+                    drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
+                    saveState();
+                });
+
+                socket.on('draw-rect', (data) => {
+                    if (!data) return;
+                    drawRect(data.x, data.y, data.w, data.h, data.color, data.size, false);
+                    saveState();
+                });
+
+                socket.on('draw-circle', (data) => {
+                    if (!data) return;
+                    drawCircle(data.x, data.y, data.radius, data.color, data.size, false);
+                    saveState();
+                });
+
+                socket.on('draw-text', (data) => {
+                    if (!data) return;
+                    ctx.font = `${data.size * 2 + 10}px 'Segoe UI', sans-serif`;
+                    ctx.fillStyle = data.color;
+                    ctx.fillText(data.text, data.x, data.y + 20);
+                    saveState();
+                });
+
+                socket.on('clear', () => {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    saveState();
+                    showToast('🗑️ Board cleared by someone', 'info');
+                });
+
+                socket.on('canvas-data', (data) => {
+                    if (data) {
+                        const img = new Image();
+                        img.onload = () => {
+                            ctx.drawImage(img, 0, 0);
+                            saveState();
+                            console.log('🔄 Canvas synced from server');
+                        };
+                        img.onerror = () => console.error('Failed to load canvas data');
+                        img.src = data;
+                    }
+                });
+
+                socket.on('drawing-status', (isDrawing) => {
+                    drawingIndicator.classList.toggle('show', isDrawing);
+                });
+
+            } catch (error) {
+                console.error('Socket connection error:', error);
+                isLocalMode = true;
+                updateConnectionStatus(false);
+                connectionStatus.textContent = 'Local Mode';
+                showToast('⚠️ Socket failed. Running in local mode.', 'error');
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                statusDot.classList.add('connected');
+                connectionStatus.textContent = 'Connected';
+            } else {
+                statusDot.classList.remove('connected');
+                connectionStatus.textContent = isLocalMode ? 'Local Mode' : 'Disconnected';
+            }
+        }
+
+        // ─── CANVAS SYNC ─────────
+        function syncCanvas() {
+            if (socket && socket.connected) {
+                try {
+                    const data = canvas.toDataURL('image/png');
+                    socket.emit('canvas-data', data);
+                } catch (error) {
+                    console.error('Sync error:', error);
+                }
+            }
+        }
+
+        // ─── TOAST NOTIFICATIONS ─────────
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+
+        // ─── TOOL SELECTION ─────────
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const toolMap = {
+                'pen': 'penTool',
+                'eraser': 'eraserTool',
+                'line': 'lineTool',
+                'rect': 'rectTool',
+                'circle': 'circleTool',
+                'text': 'textTool'
+            };
+            
+            const el = document.getElementById(toolMap[tool]);
+            if (el) el.classList.add('active');
+            
+            canvas.style.cursor = tool === 'text' ? 'text' : 'crosshair';
+            
+            if (tool === 'eraser') {
+                brushPreview.style.border = '2px dashed rgba(255,255,255,0.5)';
+            } else {
+                brushPreview.style.border = '2px solid rgba(0,0,0,0.2)';
+            }
+        }
+
+        // ─── COLOR SELECTION ─────────
+        function selectColor(color) {
+            currentColor = color;
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const colorBtn = document.querySelector(`[data-color="${color}"]`);
+            if (colorBtn) colorBtn.classList.add('active');
+            
+            document.getElementById('customColor').value = color;
+            
+            if (currentTool === 'eraser') {
+                selectTool('pen');
+            }
+        }
+
+        // ─── SIZE SELECTION ─────────
+        function selectSize(size) {
+            currentSize = size;
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const sizeBtn = document.querySelector(`[data-size="${size}"]`);
+            if (sizeBtn) sizeBtn.classList.add('active');
+        }
+
+        // ─── DARK MODE ─────────
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            const isDark = !document.body.classList.contains('light-mode');
+            localStorage.setItem('whiteboard-dark-mode', isDark ? 'true' : 'false');
+            darkModeToggle.textContent = isDark ? '🌙' : '☀️';
+        }
+
+        function loadDarkMode() {
+            const saved = localStorage.getItem('whiteboard-dark-mode');
+            if (saved === 'false') {
+                document.body.classList.add('light-mode');
+                darkModeToggle.textContent = '☀️';
+            }
+        }
+
+        // ─── WINDOW RESIZE ─────────
+        function handleResize() {
+            // Save current content
+            const dataUrl = canvas.toDataURL();
+            
+            // Re-setup canvas
+            setupCanvas();
+            
+            // Restore content
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0);
+                saveState();
+            };
+            img.src = dataUrl;
+        }
+
+        // ─── EVENT LISTENERS ─────────
+        function setupEventListeners() {
+            // Canvas events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+            canvas.addEventListener('mouseenter', () => {
+                if (currentTool !== 'text') brushPreview.style.display = 'block';
+            });
+            
+            // Touch events
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing, { passive: false });
+            canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+
+            // Tool buttons
+            document.querySelectorAll('[data-tool]').forEach(btn => {
+                btn.addEventListener('click', () => selectTool(btn.dataset.tool));
+            });
+
+            // Action buttons
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('redoBtn').addEventListener('click', redo);
+            document.getElementById('saveBtn').addEventListener('click', saveAsImage);
+
+            // Color buttons
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', () => selectColor(btn.dataset.color));
+            });
+
+            // Custom color
+            document.getElementById('customColor').addEventListener('input', (e) => {
+                selectColor(e.target.value);
+            });
+
+            // Size buttons
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', () => selectSize(parseInt(btn.dataset.size)));
+            });
+
+            // Clear button
+            document.getElementById('clearBtn').addEventListener('click', () => clearCanvas(true));
+
+            // Dark mode
+            darkModeToggle.addEventListener('click', toggleDarkMode);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') { e.preventDefault(); undo(); }
+                    if (e.key === 'y') { e.preventDefault(); redo(); }
+                    if (e.key === 's') { e.preventDefault(); saveAsImage(); }
+                }
+                if (e.key === 'c' || e.key === 'C') {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        clearCanvas(true);
+                    }
+                }
+            });
+
+            // Window resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(handleResize, 200);
+            });
+        }
+
+        // ─── INIT ─────────
+        function init() {
+            console.log('🎨 Initializing Whiteboard...');
+            loadDarkMode();
+            setupCanvas();
+            setupEventListeners();
+            connectSocket();
+            
+            // Start canvas sync
+            syncInterval = setInterval(syncCanvas, 5000);
+            
+            // Set initial active tool
+            document.getElementById('penTool').classList.add('active');
+            
+            console.log('✅ Whiteboard ready!');
+            console.log(`📐 Canvas: ${canvas.width}x${canvas.height}`);
+            console.log(`📡 Server: ${SERVER_URL || 'Local Mode'}`);
+        }
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
